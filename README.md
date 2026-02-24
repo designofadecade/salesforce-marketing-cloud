@@ -1,7 +1,6 @@
 # Salesforce Marketing Cloud SDK
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![npm version](https://badge.fury.io/js/%40designofadecade%2Fsalesforce-marketing-cloud.svg)](https://www.npmjs.com/package/@designofadecade/salesforce-marketing-cloud)
 
 A modern, type-safe Node.js SDK for interacting with the Salesforce Marketing Cloud API. Built with TypeScript and designed for Node.js 24+.
 
@@ -18,29 +17,31 @@ A modern, type-safe Node.js SDK for interacting with the Salesforce Marketing Cl
 
 ## 📦 Installation
 
-This package is published to npm. To install:
+This package is published to GitHub Packages. To install:
 
-```bash
-npm install @designofadecade/salesforce-marketing-cloud
-```
+1. **Create or update `.npmrc` in your project root:**
+   ```
+   @designofadecade:registry=https://npm.pkg.github.com
+   ```
 
-Or with yarn:
+2. **Authenticate with GitHub Packages:**
+   ```bash
+   npm login --registry=https://npm.pkg.github.com
+   # Username: your-github-username
+   # Password: your-github-personal-access-token (with read:packages permission)
+   ```
 
-```bash
-yarn add @designofadecade/salesforce-marketing-cloud
-```
-
-Or with pnpm:
-
-```bash
-pnpm add @designofadecade/salesforce-marketing-cloud
-```
+3. **Install the package:**
+   ```bash
+   npm install @designofadecade/salesforce-marketing-cloud
+   ```
 
 ### Requirements
 
 - **Node.js** >= 24.0.0
 - **ES Modules** support (package uses `"type": "module"`)
 - TypeScript >= 5.0 (if using TypeScript)
+- GitHub account with read:packages permission
 
 ## Quick Start
 
@@ -474,7 +475,7 @@ Each task will:
 3. Bump the version in package.json
 4. Create a git commit and tag
 5. Push the tag to GitHub
-6. GitHub Actions will automatically publish to npm
+6. GitHub Actions will automatically publish to GitHub Packages
 
 ### Manual Release
 
@@ -491,7 +492,7 @@ git push --follow-tags
 
 The GitHub Actions workflow will automatically:
 - Build the package
-- Publish to npm with provenance
+- Publish to GitHub Packages
 - Create a GitHub release with auto-generated release notes
 
 ## License
