@@ -30,7 +30,7 @@ npm install @designofadecade/salesforce-marketing-cloud
 ## Quick Start
 
 ```typescript
-import SalesForceClient, { Assets, DataExtensions, AutomationStudio } from '@designofadecade/salesforce-marketing-cloud';
+import SalesForceClient, { Assets, DataExtensions, AutomationStudio, Scopes } from '@designofadecade/salesforce-marketing-cloud';
 
 // Initialize the client
 const client = new SalesForceClient({
@@ -39,9 +39,9 @@ const client = new SalesForceClient({
   clientSecret: 'your-client-secret',
   accountId: 'your-account-id',
   // Scope is optional - use built-in constants or omit to use all package permissions
-  scope: SalesForceClient.buildScope([
-    SalesForceClient.SCOPE_EMAIL_READ,
-    SalesForceClient.SCOPE_DATA_EXTENSIONS_WRITE
+  scope: Scopes.buildScope([
+    Scopes.EMAIL_READ,
+    Scopes.DATA_EXTENSIONS_WRITE
   ])
 });
 

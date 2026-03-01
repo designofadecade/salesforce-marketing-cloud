@@ -48,26 +48,30 @@ The SDK provides **45+ static scope constants** covering all Marketing Cloud API
 
 **Single scope:**
 ```typescript
+import SalesForceClient, { Scopes } from '@designofadecade/salesforce-marketing-cloud';
+
 const client = new SalesForceClient({
   clientDomain: 'your-domain',
   clientId: 'your-client-id',
   clientSecret: 'your-client-secret',
   accountId: 'your-account-id',
-  scope: SalesForceClient.SCOPE_EMAIL_READ
+  scope: Scopes.EMAIL_READ
 });
 ```
 
 **Multiple scopes:**
 ```typescript
+import SalesForceClient, { Scopes } from '@designofadecade/salesforce-marketing-cloud';
+
 const client = new SalesForceClient({
   clientDomain: 'your-domain',
   clientId: 'your-client-id',
   clientSecret: 'your-client-secret',
   accountId: 'your-account-id',
-  scope: SalesForceClient.buildScope([
-    SalesForceClient.SCOPE_EMAIL_READ,
-    SalesForceClient.SCOPE_EMAIL_SEND,
-    SalesForceClient.SCOPE_DATA_EXTENSIONS_WRITE
+  scope: Scopes.buildScope([
+    Scopes.EMAIL_READ,
+    Scopes.EMAIL_SEND,
+    Scopes.DATA_EXTENSIONS_WRITE
   ])
 });
 ```

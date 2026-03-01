@@ -1,4 +1,5 @@
 import Soap from 'soap';
+import Scopes from './Scopes.js';
 import { SalesForceAPIError, SalesForceAuthError, SalesForceConfigError, } from './errors.js';
 /**
  * Salesforce Marketing Cloud API Client
@@ -8,12 +9,17 @@ import { SalesForceAPIError, SalesForceAuthError, SalesForceConfigError, } from 
  *
  * @example
  * ```typescript
+ * import SalesForceClient, { Scopes } from '@designofadecade/salesforce-marketing-cloud';
+ *
  * const client = new SalesForceClient({
  *   clientDomain: 'your-subdomain',
  *   clientId: 'your-client-id',
  *   clientSecret: 'your-client-secret',
  *   accountId: 'your-account-id',
- *   scope: SalesForceClient.SCOPE_EMAIL_READ
+ *   scope: Scopes.buildScope([
+ *     Scopes.EMAIL_READ,
+ *     Scopes.DATA_EXTENSIONS_WRITE
+ *   ])
  * });
  *
  * // Make API calls
@@ -22,111 +28,113 @@ import { SalesForceAPIError, SalesForceAuthError, SalesForceConfigError, } from 
  */
 export default class SalesForceClient {
     // ========================================
-    // OAuth Scope Constants
+    // OAuth Scope Constants (Backward Compatibility)
+    // @deprecated Use Scopes class instead (e.g., Scopes.EMAIL_READ)
     // ========================================
-    // Messaging & Channel Scopes
-    /** Read access to email functionality */
-    static SCOPE_EMAIL_READ = 'email_read';
-    /** Write access to email functionality */
-    static SCOPE_EMAIL_WRITE = 'email_write';
-    /** Permission to send emails */
-    static SCOPE_EMAIL_SEND = 'email_send';
-    /** Read access to SMS functionality */
-    static SCOPE_SMS_READ = 'sms_read';
-    /** Write access to SMS functionality */
-    static SCOPE_SMS_WRITE = 'sms_write';
-    /** Permission to send SMS messages */
-    static SCOPE_SMS_SEND = 'sms_send';
-    /** Read access to push notifications */
-    static SCOPE_PUSH_READ = 'push_read';
-    /** Write access to push notifications */
-    static SCOPE_PUSH_WRITE = 'push_write';
-    /** Permission to send push notifications */
-    static SCOPE_PUSH_SEND = 'push_send';
-    /** Read access to social media */
-    static SCOPE_SOCIAL_READ = 'social_read';
-    /** Write access to social media */
-    static SCOPE_SOCIAL_WRITE = 'social_write';
-    /** Permission to publish to social media */
-    static SCOPE_SOCIAL_PUBLISH = 'social_publish';
-    /** Read access to OTT (Over-The-Top) chat messaging */
-    static SCOPE_OTT_READ = 'ott_read';
-    /** Permission to send OTT messages */
-    static SCOPE_OTT_SEND = 'ott_send';
-    // Data & Content Scopes
-    /** Read access to data extensions */
-    static SCOPE_DATA_EXTENSIONS_READ = 'data_extensions_read';
-    /** Write access to data extensions */
-    static SCOPE_DATA_EXTENSIONS_WRITE = 'data_extensions_write';
-    /** Read access to audiences */
-    static SCOPE_AUDIENCES_READ = 'audiences_read';
-    /** Write access to audiences */
-    static SCOPE_AUDIENCES_WRITE = 'audiences_write';
-    /** Read access to lists and subscribers */
-    static SCOPE_LIST_AND_SUBSCRIBERS_READ = 'list_and_subscribers_read';
-    /** Write access to lists and subscribers */
-    static SCOPE_LIST_AND_SUBSCRIBERS_WRITE = 'list_and_subscribers_write';
-    /** Read access to file locations */
-    static SCOPE_FILE_LOCATIONS_READ = 'file_locations_read';
-    /** Write access to file locations */
-    static SCOPE_FILE_LOCATIONS_WRITE = 'file_locations_write';
-    /** Read access to tracking events */
-    static SCOPE_TRACKING_EVENTS_READ = 'tracking_events_read';
-    /** Read access to documents and images */
-    static SCOPE_DOCUMENTS_AND_IMAGES_READ = 'documents_and_images_read';
-    /** Write access to documents and images */
-    static SCOPE_DOCUMENTS_AND_IMAGES_WRITE = 'documents_and_images_write';
-    /** Read access to saved content */
-    static SCOPE_SAVED_CONTENT_READ = 'saved_content_read';
-    /** Write access to saved content */
-    static SCOPE_SAVED_CONTENT_WRITE = 'saved_content_write';
-    // Automation & Journey Scopes
-    /** Execute automations */
-    static SCOPE_AUTOMATIONS_EXECUTE = 'automations_execute';
-    /** Read access to automations */
-    static SCOPE_AUTOMATIONS_READ = 'automations_read';
-    /** Write access to automations */
-    static SCOPE_AUTOMATIONS_WRITE = 'automations_write';
-    /** Execute/publish journeys */
-    static SCOPE_JOURNEYS_EXECUTE = 'journeys_execute';
-    /** Read access to journeys */
-    static SCOPE_JOURNEYS_READ = 'journeys_read';
-    /** Write access to journeys */
-    static SCOPE_JOURNEYS_WRITE = 'journeys_write';
-    // Administrative & Provisioning Scopes
-    /** Read access to users */
-    static SCOPE_USERS_READ = 'users_read';
-    /** Write access to users */
-    static SCOPE_USERS_WRITE = 'users_write';
-    /** Read access to organizations */
-    static SCOPE_ORGANIZATIONS_READ = 'organizations_read';
-    /** Write access to organizations */
-    static SCOPE_ORGANIZATIONS_WRITE = 'organizations_write';
-    /** Write access to workflows */
-    static SCOPE_WORKFLOWS_WRITE = 'workflows_write';
-    // Additional Scopes
-    /** Read access to webhooks */
-    static SCOPE_WEBHOOKS_READ = 'webhooks_read';
-    /** Write access to webhooks */
-    static SCOPE_WEBHOOKS_WRITE = 'webhooks_write';
-    /** Offline access (for refresh tokens) */
-    static SCOPE_OFFLINE = 'offline';
+    /** @deprecated Use Scopes.EMAIL_READ instead */
+    static SCOPE_EMAIL_READ = Scopes.EMAIL_READ;
+    /** @deprecated Use Scopes.EMAIL_WRITE instead */
+    static SCOPE_EMAIL_WRITE = Scopes.EMAIL_WRITE;
+    /** @deprecated Use Scopes.EMAIL_SEND instead */
+    static SCOPE_EMAIL_SEND = Scopes.EMAIL_SEND;
+    /** @deprecated Use Scopes.SMS_READ instead */
+    static SCOPE_SMS_READ = Scopes.SMS_READ;
+    /** @deprecated Use Scopes.SMS_WRITE instead */
+    static SCOPE_SMS_WRITE = Scopes.SMS_WRITE;
+    /** @deprecated Use Scopes.SMS_SEND instead */
+    static SCOPE_SMS_SEND = Scopes.SMS_SEND;
+    /** @deprecated Use Scopes.PUSH_READ instead */
+    static SCOPE_PUSH_READ = Scopes.PUSH_READ;
+    /** @deprecated Use Scopes.PUSH_WRITE instead */
+    static SCOPE_PUSH_WRITE = Scopes.PUSH_WRITE;
+    /** @deprecated Use Scopes.PUSH_SEND instead */
+    static SCOPE_PUSH_SEND = Scopes.PUSH_SEND;
+    /** @deprecated Use Scopes.SOCIAL_READ instead */
+    static SCOPE_SOCIAL_READ = Scopes.SOCIAL_READ;
+    /** @deprecated Use Scopes.SOCIAL_WRITE instead */
+    static SCOPE_SOCIAL_WRITE = Scopes.SOCIAL_WRITE;
+    /** @deprecated Use Scopes.SOCIAL_PUBLISH instead */
+    static SCOPE_SOCIAL_PUBLISH = Scopes.SOCIAL_PUBLISH;
+    /** @deprecated Use Scopes.OTT_READ instead */
+    static SCOPE_OTT_READ = Scopes.OTT_READ;
+    /** @deprecated Use Scopes.OTT_SEND instead */
+    static SCOPE_OTT_SEND = Scopes.OTT_SEND;
+    /** @deprecated Use Scopes.DATA_EXTENSIONS_READ instead */
+    static SCOPE_DATA_EXTENSIONS_READ = Scopes.DATA_EXTENSIONS_READ;
+    /** @deprecated Use Scopes.DATA_EXTENSIONS_WRITE instead */
+    static SCOPE_DATA_EXTENSIONS_WRITE = Scopes.DATA_EXTENSIONS_WRITE;
+    /** @deprecated Use Scopes.AUDIENCES_READ instead */
+    static SCOPE_AUDIENCES_READ = Scopes.AUDIENCES_READ;
+    /** @deprecated Use Scopes.AUDIENCES_WRITE instead */
+    static SCOPE_AUDIENCES_WRITE = Scopes.AUDIENCES_WRITE;
+    /** @deprecated Use Scopes.LIST_AND_SUBSCRIBERS_READ instead */
+    static SCOPE_LIST_AND_SUBSCRIBERS_READ = Scopes.LIST_AND_SUBSCRIBERS_READ;
+    /** @deprecated Use Scopes.LIST_AND_SUBSCRIBERS_WRITE instead */
+    static SCOPE_LIST_AND_SUBSCRIBERS_WRITE = Scopes.LIST_AND_SUBSCRIBERS_WRITE;
+    /** @deprecated Use Scopes.FILE_LOCATIONS_READ instead */
+    static SCOPE_FILE_LOCATIONS_READ = Scopes.FILE_LOCATIONS_READ;
+    /** @deprecated Use Scopes.FILE_LOCATIONS_WRITE instead */
+    static SCOPE_FILE_LOCATIONS_WRITE = Scopes.FILE_LOCATIONS_WRITE;
+    /** @deprecated Use Scopes.TRACKING_EVENTS_READ instead */
+    static SCOPE_TRACKING_EVENTS_READ = Scopes.TRACKING_EVENTS_READ;
+    /** @deprecated Use Scopes.DOCUMENTS_AND_IMAGES_READ instead */
+    static SCOPE_DOCUMENTS_AND_IMAGES_READ = Scopes.DOCUMENTS_AND_IMAGES_READ;
+    /** @deprecated Use Scopes.DOCUMENTS_AND_IMAGES_WRITE instead */
+    static SCOPE_DOCUMENTS_AND_IMAGES_WRITE = Scopes.DOCUMENTS_AND_IMAGES_WRITE;
+    /** @deprecated Use Scopes.SAVED_CONTENT_READ instead */
+    static SCOPE_SAVED_CONTENT_READ = Scopes.SAVED_CONTENT_READ;
+    /** @deprecated Use Scopes.SAVED_CONTENT_WRITE instead */
+    static SCOPE_SAVED_CONTENT_WRITE = Scopes.SAVED_CONTENT_WRITE;
+    /** @deprecated Use Scopes.AUTOMATIONS_EXECUTE instead */
+    static SCOPE_AUTOMATIONS_EXECUTE = Scopes.AUTOMATIONS_EXECUTE;
+    /** @deprecated Use Scopes.AUTOMATIONS_READ instead */
+    static SCOPE_AUTOMATIONS_READ = Scopes.AUTOMATIONS_READ;
+    /** @deprecated Use Scopes.AUTOMATIONS_WRITE instead */
+    static SCOPE_AUTOMATIONS_WRITE = Scopes.AUTOMATIONS_WRITE;
+    /** @deprecated Use Scopes.JOURNEYS_EXECUTE instead */
+    static SCOPE_JOURNEYS_EXECUTE = Scopes.JOURNEYS_EXECUTE;
+    /** @deprecated Use Scopes.JOURNEYS_READ instead */
+    static SCOPE_JOURNEYS_READ = Scopes.JOURNEYS_READ;
+    /** @deprecated Use Scopes.JOURNEYS_WRITE instead */
+    static SCOPE_JOURNEYS_WRITE = Scopes.JOURNEYS_WRITE;
+    /** @deprecated Use Scopes.USERS_READ instead */
+    static SCOPE_USERS_READ = Scopes.USERS_READ;
+    /** @deprecated Use Scopes.USERS_WRITE instead */
+    static SCOPE_USERS_WRITE = Scopes.USERS_WRITE;
+    /** @deprecated Use Scopes.ORGANIZATIONS_READ instead */
+    static SCOPE_ORGANIZATIONS_READ = Scopes.ORGANIZATIONS_READ;
+    /** @deprecated Use Scopes.ORGANIZATIONS_WRITE instead */
+    static SCOPE_ORGANIZATIONS_WRITE = Scopes.ORGANIZATIONS_WRITE;
+    /** @deprecated Use Scopes.WORKFLOWS_WRITE instead */
+    static SCOPE_WORKFLOWS_WRITE = Scopes.WORKFLOWS_WRITE;
+    /** @deprecated Use Scopes.WEBHOOKS_READ instead */
+    static SCOPE_WEBHOOKS_READ = Scopes.WEBHOOKS_READ;
+    /** @deprecated Use Scopes.WEBHOOKS_WRITE instead */
+    static SCOPE_WEBHOOKS_WRITE = Scopes.WEBHOOKS_WRITE;
+    /** @deprecated Use Scopes.OFFLINE instead */
+    static SCOPE_OFFLINE = Scopes.OFFLINE;
     /**
      * Combines multiple scopes into a single space-separated string
      *
+     * @deprecated Use Scopes.buildScope() instead
      * @param scopes - Array of scope strings to combine
      * @returns Space-separated scope string
      *
      * @example
      * ```typescript
-     * const scope = SalesForceClient.buildScope([
-     *   SalesForceClient.SCOPE_EMAIL_READ,
-     *   SalesForceClient.SCOPE_DATA_EXTENSIONS_WRITE
+     * // Deprecated
+     * const scope = SalesForceClient.buildScope([...]);
+     *
+     * // Use instead:
+     * import { Scopes } from '@designofadecade/salesforce-marketing-cloud';
+     * const scope = Scopes.buildScope([
+     *   Scopes.EMAIL_READ,
+     *   Scopes.DATA_EXTENSIONS_WRITE
      * ]);
      * ```
      */
     static buildScope(scopes) {
-        return scopes.filter(Boolean).join(' ');
+        return Scopes.buildScope(scopes);
     }
     #clientDomain;
     #clientId;
