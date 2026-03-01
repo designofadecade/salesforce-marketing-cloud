@@ -42,17 +42,68 @@ Your Marketing Cloud **MID** (Member ID / Account ID). Found in the top-right ac
 
 A space-separated list of OAuth scopes to request. If omitted, the token inherits all scopes granted to the installed package.
 
-Common scopes:
+The SDK provides static scope constants for convenience:
 
-| Scope | Description |
-|---|---|
-| `email` | Send and manage email messages |
-| `list_and_subscribers` | Manage subscriber lists |
-| `data_extensions` | Read/write data extensions |
-| `automations` | Manage automations |
-| `assets` | Manage content assets |
+#### Available Scope Constants
 
-Example: `'email list_and_subscribers data_extensions'`
+| Constant | Scope Value | Description |
+|---|---|---|
+| `SCOPE_EMAIL_READ` | `email_read` | Read access to email |
+| `SCOPE_EMAIL_WRITE` | `email_write` | Write access to email |
+| `SCOPE_EMAIL_SEND` | `email_send` | Permission to send emails |
+| `SCOPE_LIST_AND_SUBSCRIBERS_READ` | `list_and_subscribers_read` | Read access to lists/subscribers |
+| `SCOPE_LIST_AND_SUBSCRIBERS_WRITE` | `list_and_subscribers_write` | Write access to lists/subscribers |
+| `SCOPE_DATA_EXTENSIONS_READ` | `data_extensions_read` | Read access to data extensions |
+| `SCOPE_DATA_EXTENSIONS_WRITE` | `data_extensions_write` | Write access to data extensions |
+| `SCOPE_SAVED_CONTENT_READ` | `saved_content_read` | Read access to saved content |
+| `SCOPE_SAVED_CONTENT_WRITE` | `saved_content_write` | Write access to saved content |
+| `SCOPE_AUTOMATIONS_READ` | `automations_read` | Read access to automations |
+| `SCOPE_AUTOMATIONS_WRITE` | `automations_write` | Write access to automations |
+| `SCOPE_AUTOMATIONS_EXECUTE` | `automations_execute` | Execute automations |
+| `SCOPE_JOURNEYS_READ` | `journeys_read` | Read access to journeys |
+| `SCOPE_JOURNEYS_WRITE` | `journeys_write` | Write access to journeys |
+| `SCOPE_JOURNEYS_EXECUTE` | `journeys_execute` | Execute/publish journeys |
+| `SCOPE_TRACKING_EVENTS_READ` | `tracking_events_read` | Read access to tracking events |
+| `SCOPE_WEBHOOKS_READ` | `webhooks_read` | Read access to webhooks |
+| `SCOPE_WEBHOOKS_WRITE` | `webhooks_write` | Write access to webhooks |
+| `SCOPE_DOCUMENTS_AND_IMAGES_READ` | `documents_and_images_read` | Read access to documents/images |
+| `SCOPE_DOCUMENTS_AND_IMAGES_WRITE` | `documents_and_images_write` | Write access to documents/images |
+| `SCOPE_OFFLINE` | `offline` | Offline access (refresh tokens) |
+
+#### Using Scope Constants
+
+**Single scope:**
+```typescript
+import SalesForceClient from '@designofadecade/salesforce-marketing-cloud';
+
+const client = new SalesForceClient({
+  clientDomain: 'your-domain',
+  clientId: 'your-client-id',
+  clientSecret: 'your-client-secret',
+  accountId: 'your-account-id',
+  scope: SalesForceClient.SCOPE_EMAIL_READ
+});
+```
+
+**Multiple scopes:**
+```typescript
+const client = new SalesForceClient({
+  clientDomain: 'your-domain',
+  clientId: 'your-client-id',
+  clientSecret: 'your-client-secret',
+  accountId: 'your-account-id',
+  scope: SalesForceClient.buildScope([
+    SalesForceClient.SCOPE_EMAIL_READ,
+    SalesForceClient.SCOPE_EMAIL_WRITE,
+    SalesForceClient.SCOPE_DATA_EXTENSIONS_WRITE
+  ])
+});
+```
+
+**Manual scope string:**
+```typescript
+scope: 'email_read email_write data_extensions_read'
+```
 
 ---
 

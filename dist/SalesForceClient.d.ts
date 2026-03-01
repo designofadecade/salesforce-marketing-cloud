@@ -12,7 +12,7 @@ import type { SalesForceClientConfig, SoapClientInterface } from './types.js';
  *   clientId: 'your-client-id',
  *   clientSecret: 'your-client-secret',
  *   accountId: 'your-account-id',
- *   scope: 'your-scope'
+ *   scope: SalesForceClient.SCOPE_EMAIL_READ
  * });
  *
  * // Make API calls
@@ -21,6 +21,63 @@ import type { SalesForceClientConfig, SoapClientInterface } from './types.js';
  */
 export default class SalesForceClient {
     #private;
+    /** Read access to email functionality */
+    static readonly SCOPE_EMAIL_READ = "email_read";
+    /** Write access to email functionality */
+    static readonly SCOPE_EMAIL_WRITE = "email_write";
+    /** Permission to send emails */
+    static readonly SCOPE_EMAIL_SEND = "email_send";
+    /** Read access to lists and subscribers */
+    static readonly SCOPE_LIST_AND_SUBSCRIBERS_READ = "list_and_subscribers_read";
+    /** Write access to lists and subscribers */
+    static readonly SCOPE_LIST_AND_SUBSCRIBERS_WRITE = "list_and_subscribers_write";
+    /** Read access to data extensions */
+    static readonly SCOPE_DATA_EXTENSIONS_READ = "data_extensions_read";
+    /** Write access to data extensions */
+    static readonly SCOPE_DATA_EXTENSIONS_WRITE = "data_extensions_write";
+    /** Read access to saved content */
+    static readonly SCOPE_SAVED_CONTENT_READ = "saved_content_read";
+    /** Write access to saved content */
+    static readonly SCOPE_SAVED_CONTENT_WRITE = "saved_content_write";
+    /** Read access to automations */
+    static readonly SCOPE_AUTOMATIONS_READ = "automations_read";
+    /** Write access to automations */
+    static readonly SCOPE_AUTOMATIONS_WRITE = "automations_write";
+    /** Execute automations */
+    static readonly SCOPE_AUTOMATIONS_EXECUTE = "automations_execute";
+    /** Read access to journeys */
+    static readonly SCOPE_JOURNEYS_READ = "journeys_read";
+    /** Write access to journeys */
+    static readonly SCOPE_JOURNEYS_WRITE = "journeys_write";
+    /** Execute/publish journeys */
+    static readonly SCOPE_JOURNEYS_EXECUTE = "journeys_execute";
+    /** Read access to tracking events */
+    static readonly SCOPE_TRACKING_EVENTS_READ = "tracking_events_read";
+    /** Read access to webhooks */
+    static readonly SCOPE_WEBHOOKS_READ = "webhooks_read";
+    /** Write access to webhooks */
+    static readonly SCOPE_WEBHOOKS_WRITE = "webhooks_write";
+    /** Read access to documents and images */
+    static readonly SCOPE_DOCUMENTS_AND_IMAGES_READ = "documents_and_images_read";
+    /** Write access to documents and images */
+    static readonly SCOPE_DOCUMENTS_AND_IMAGES_WRITE = "documents_and_images_write";
+    /** Offline access (for refresh tokens) */
+    static readonly SCOPE_OFFLINE = "offline";
+    /**
+     * Combines multiple scopes into a single space-separated string
+     *
+     * @param scopes - Array of scope strings to combine
+     * @returns Space-separated scope string
+     *
+     * @example
+     * ```typescript
+     * const scope = SalesForceClient.buildScope([
+     *   SalesForceClient.SCOPE_EMAIL_READ,
+     *   SalesForceClient.SCOPE_DATA_EXTENSIONS_WRITE
+     * ]);
+     * ```
+     */
+    static buildScope(scopes: string[]): string;
     /**
      * Creates a new Salesforce Marketing Cloud client instance
      *
