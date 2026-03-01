@@ -27,6 +27,7 @@ export default class SalesForceClient {
     #accountId;
     #scope;
     #authentication;
+    #tokenExpiresAt;
     /**
      * Creates a new Salesforce Marketing Cloud client instance
      *
@@ -56,6 +57,18 @@ export default class SalesForceClient {
         this.#scope = config.scope || '';
     }
     /**
+     * Checks whether the current authentication token has expired
+     *
+     * @private
+     * @returns True if the token is expired or expiry time is unknown
+     */
+    #isTokenExpired() {
+        if (!this.#tokenExpiresAt) {
+            return true;
+        }
+        return Date.now() >= this.#tokenExpiresAt;
+    }
+    /**
      * Authenticates with the Marketing Cloud API using OAuth 2.0 client credentials flow
      *
      * @private
@@ -83,6 +96,8 @@ export default class SalesForceClient {
             }
             const data = (await res.json());
             this.#authentication = data;
+            // Store expiry time with a 60-second buffer to avoid using near-expired tokens
+            this.#tokenExpiresAt = Date.now() + (data.expires_in - 60) * 1000;
         }
         catch (error) {
             if (error instanceof SalesForceAuthError) {
@@ -111,7 +126,7 @@ export default class SalesForceClient {
         if (!endpoint) {
             throw new SalesForceAPIError('Endpoint is required', 400);
         }
-        if (!this.#authentication) {
+        if (!this.#authentication || this.#isTokenExpired()) {
             await this.#authenticate();
         }
         if (!this.#authentication) {
@@ -170,7 +185,7 @@ export default class SalesForceClient {
      * ```
      */
     async soapClient() {
-        if (!this.#authentication) {
+        if (!this.#authentication || this.#isTokenExpired()) {
             await this.#authenticate();
         }
         if (!this.#authentication) {
