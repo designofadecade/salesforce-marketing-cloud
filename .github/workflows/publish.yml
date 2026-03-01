@@ -74,8 +74,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    # Only publish to npm when NPM_TOKEN secret is configured
-    if: ${{ secrets.NPM_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -92,13 +90,8 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Configure npm for public registry
-        run: |
-          npm pkg set publishConfig.registry=https://registry.npmjs.org
-          npm pkg set publishConfig.access=public
-
-      - name: Publish to npm
-        run: npm publish --access public
+      - name: Publish to npmjs.com
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
