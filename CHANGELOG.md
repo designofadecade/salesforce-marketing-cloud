@@ -5,7 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-03-01
+
+### Added
+- New `Scopes` class with 45+ OAuth scope constants for all Marketing Cloud APIs
+- Comprehensive OAuth scope documentation (`docs/oauth-scopes.md`) with examples and best practices
+- Scope constants organized by category: Messaging, Data & Content, Automation, Administration
+- `Scopes.buildScope()` helper method to combine multiple scopes
+- Support for all Marketing Cloud channels: Email, SMS, Push, Social, OTT (chat)
+- Test suite for Scopes class (11 new tests, 62 total)
+
+### Changed
+- OAuth scopes now accessed via `Scopes` class instead of `SalesForceClient`
+- Updated all examples and documentation to use new `Scopes` class
+- Scope constant naming simplified (removed `SCOPE_` prefix, e.g., `Scopes.EMAIL_READ` instead of `SalesForceClient.SCOPE_EMAIL_READ`)
 
 ## [1.1.0] - 2026-03-01
 
