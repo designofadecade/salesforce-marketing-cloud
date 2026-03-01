@@ -2,6 +2,7 @@ import SalesForceClient from './SalesForceClient.js';
 import Assets from './Assets.js';
 import AutomationStudio from './AutomationStudio.js';
 import DataExtensions from './DataExtensions.js';
+import Scopes from './Scopes.js';
 
 // Export error classes
 export {
@@ -29,7 +30,7 @@ export type {
 } from './types.js';
 
 // Export main classes
-export { SalesForceClient, Assets, AutomationStudio, DataExtensions };
+export { SalesForceClient, Assets, AutomationStudio, DataExtensions, Scopes };
 
 // Default export
 export default SalesForceClient;
