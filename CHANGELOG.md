@@ -7,16 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-03-01
+
 ### Added
 - Automatic OAuth token expiry detection and refresh with a 60-second safety buffer (`SalesForceClient`)
 - `docs/` folder with structured documentation: `index.md`, `getting-started.md`, `api-reference.md`, `error-handling.md`, `configuration.md`
-- npm registry (`publish-npm` job) support in publish workflow — activated by adding an `NPM_TOKEN` secret
+- npm registry (`publish-npm` job) support in publish workflow with provenance attestation
 - Pre-publish test gate (`test` job) in publish workflow to prevent broken releases
+- Build provenance support (`--provenance` flag) for supply chain security
 
 ### Changed
+- **Breaking**: Package now published to npmjs.com instead of GitHub Packages
+- Updated `publishConfig` to publish to npm public registry with `access: public`
+- Simplified installation - no longer requires `.npmrc` configuration or GitHub authentication
+- Updated all documentation to reflect npm installation instead of GitHub Packages
 - `api()` body parameter type widened to `Record<string, any> | Record<string, any>[] | null` to correctly accept array payloads (used by `DataExtensions.insert`, `delete`, etc.)
 - Upgraded `softprops/action-gh-release` from `v1` to `v2` in publish workflow
 - Upgraded `codecov/codecov-action` from `v4` to `v5` in test workflow
+- GitHub Actions workflow now publishes to both GitHub Packages and npmjs.com with provenance
 
 ## [1.0.4] - 2026-02-24
 
@@ -44,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Node.js >= 24.0.0
 - ES Modules support
 
-[Unreleased]: https://github.com/designofadecade/salesforce-marketing-cloud/compare/v1.0.4...HEAD
+[Unreleased]: https://github.com/designofadecade/salesforce-marketing-cloud/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/designofadecade/salesforce-marketing-cloud/compare/v1.0.4...v1.1.0
 [1.0.4]: https://github.com/designofadecade/salesforce-marketing-cloud/releases/tag/v1.0.4
 [1.0.0]: https://github.com/designofadecade/salesforce-marketing-cloud/releases/tag/v1.0.0
