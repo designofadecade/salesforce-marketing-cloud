@@ -104,7 +104,7 @@ describe('Scopes', () => {
             // At runtime, the values should be accessible
             expect(Scopes.EMAIL_READ).toBe('email_read');
             expect(typeof Scopes.EMAIL_READ).toBe('string');
-            
+
             // Verify all major categories have constants
             expect(Scopes).toHaveProperty('EMAIL_READ');
             expect(Scopes).toHaveProperty('DATA_EXTENSIONS_READ');
