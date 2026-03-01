@@ -17,31 +17,15 @@ A modern, type-safe Node.js SDK for interacting with the Salesforce Marketing Cl
 
 ## 📦 Installation
 
-This package is published to GitHub Packages. To install:
-
-1. **Create or update `.npmrc` in your project root:**
-   ```
-   @designofadecade:registry=https://npm.pkg.github.com
-   ```
-
-2. **Authenticate with GitHub Packages:**
-   ```bash
-   npm login --registry=https://npm.pkg.github.com
-   # Username: your-github-username
-   # Password: your-github-personal-access-token (with read:packages permission)
-   ```
-
-3. **Install the package:**
-   ```bash
-   npm install @designofadecade/salesforce-marketing-cloud
-   ```
+```bash
+npm install @designofadecade/salesforce-marketing-cloud
+```
 
 ### Requirements
 
 - **Node.js** >= 24.0.0
 - **ES Modules** support (package uses `"type": "module"`)
 - TypeScript >= 5.0 (if using TypeScript)
-- GitHub account with read:packages permission
 
 ## Quick Start
 

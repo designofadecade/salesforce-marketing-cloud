@@ -14,6 +14,6 @@ A modern, type-safe Node.js SDK for interacting with the Salesforce Marketing Cl
 ## Quick Links
 
 - [GitHub Repository](https://github.com/designofadecade/salesforce-marketing-cloud)
-- [npm Package](https://github.com/designofadecade/salesforce-marketing-cloud/packages)
+- [npm Package](https://www.npmjs.com/package/@designofadecade/salesforce-marketing-cloud)
 - [Changelog](../CHANGELOG.md)
 - [Contributing](../CONTRIBUTING.md)

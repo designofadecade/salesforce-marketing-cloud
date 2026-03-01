@@ -8,25 +8,7 @@
 
 ## Installation
 
-This package is published to GitHub Packages.
-
-### 1. Configure npm to use GitHub Packages for the `@designofadecade` scope
-
-Create or update `.npmrc` in your project root:
-
-```
-@designofadecade:registry=https://npm.pkg.github.com
-```
-
-### 2. Authenticate with GitHub Packages
-
-```bash
-npm login --registry=https://npm.pkg.github.com
-# Username: your-github-username
-# Password: your-github-personal-access-token (needs read:packages)
-```
-
-### 3. Install the package
+Install the package from npm:
 
 ```bash
 npm install @designofadecade/salesforce-marketing-cloud
