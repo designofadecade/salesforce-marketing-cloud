@@ -102,6 +102,8 @@ describe('SalesForceClient', () => {
             const mockAuthResponse = {
                 access_token: 'test-token',
                 rest_instance_url: 'https://test.rest.marketingcloudapis.com',
+                expires_in: 3600,
+                token_type: 'Bearer',
             };
 
             (global.fetch as any)
@@ -123,6 +125,39 @@ describe('SalesForceClient', () => {
 
             // Authentication should only be called once
             expect(global.fetch).toHaveBeenCalledTimes(3);
+        });
+
+        it('should re-authenticate when token has expired', async () => {
+            const mockAuthResponse = {
+                access_token: 'test-token',
+                rest_instance_url: 'https://test.rest.marketingcloudapis.com',
+                expires_in: 0, // Immediately expired (0 - 60 = -60 seconds)
+                token_type: 'Bearer',
+            };
+
+            (global.fetch as any)
+                .mockResolvedValueOnce({
+                    ok: true,
+                    json: async () => mockAuthResponse,
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    json: async () => ({ data: 'first' }),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    json: async () => ({ ...mockAuthResponse, access_token: 'new-token' }),
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    json: async () => ({ data: 'second' }),
+                });
+
+            await client.api('/test/endpoint1');
+            await client.api('/test/endpoint2');
+
+            // Authentication should have been called twice (once per request due to expiry)
+            expect(global.fetch).toHaveBeenCalledTimes(4);
         });
     });
 

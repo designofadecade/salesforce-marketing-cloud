@@ -37,6 +37,7 @@ export default class SalesForceClient {
     #accountId: string;
     #scope: string;
     #authentication?: AuthenticationResponse;
+    #tokenExpiresAt?: number;
 
     /**
      * Creates a new Salesforce Marketing Cloud client instance
@@ -73,6 +74,19 @@ export default class SalesForceClient {
     }
 
     /**
+     * Checks whether the current authentication token has expired
+     *
+     * @private
+     * @returns True if the token is expired or expiry time is unknown
+     */
+    #isTokenExpired(): boolean {
+        if (!this.#tokenExpiresAt) {
+            return true;
+        }
+        return Date.now() >= this.#tokenExpiresAt;
+    }
+
+    /**
      * Authenticates with the Marketing Cloud API using OAuth 2.0 client credentials flow
      *
      * @private
@@ -106,6 +120,8 @@ export default class SalesForceClient {
 
             const data = (await res.json()) as AuthenticationResponse;
             this.#authentication = data;
+            // Store expiry time with a 60-second buffer to avoid using near-expired tokens
+            this.#tokenExpiresAt = Date.now() + (data.expires_in - 60) * 1000;
         } catch (error) {
             if (error instanceof SalesForceAuthError) {
                 throw error;
@@ -136,13 +152,13 @@ export default class SalesForceClient {
     async api<T = any>(
         endpoint: string,
         method: string = 'GET',
-        body: Record<string, any> | null = null
+        body: Record<string, any> | Record<string, any>[] | null = null
     ): Promise<T> {
         if (!endpoint) {
             throw new SalesForceAPIError('Endpoint is required', 400);
         }
 
-        if (!this.#authentication) {
+        if (!this.#authentication || this.#isTokenExpired()) {
             await this.#authenticate();
         }
 
@@ -217,7 +233,7 @@ export default class SalesForceClient {
      * ```
      */
     async soapClient(): Promise<SoapClientInterface> {
-        if (!this.#authentication) {
+        if (!this.#authentication || this.#isTokenExpired()) {
             await this.#authenticate();
         }
 
