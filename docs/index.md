@@ -7,9 +7,10 @@ A modern, type-safe Node.js SDK for interacting with the Salesforce Marketing Cl
 | Document | Description |
 |---|---|
 | [Getting Started](./getting-started.md) | Installation, configuration, and first API call |
+| [Configuration](./configuration.md) | All configuration options explained |
+| [OAuth Scopes](./oauth-scopes.md) | Complete reference for all available OAuth scopes |
 | [API Reference](./api-reference.md) | Complete class and method reference |
 | [Error Handling](./error-handling.md) | Working with custom error types |
-| [Configuration](./configuration.md) | All configuration options explained |
 
 ## Quick Links
 

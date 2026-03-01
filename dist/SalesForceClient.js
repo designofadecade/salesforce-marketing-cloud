@@ -21,47 +21,94 @@ import { SalesForceAPIError, SalesForceAuthError, SalesForceConfigError, } from 
  * ```
  */
 export default class SalesForceClient {
+    // ========================================
     // OAuth Scope Constants
+    // ========================================
+    // Messaging & Channel Scopes
     /** Read access to email functionality */
     static SCOPE_EMAIL_READ = 'email_read';
     /** Write access to email functionality */
     static SCOPE_EMAIL_WRITE = 'email_write';
     /** Permission to send emails */
     static SCOPE_EMAIL_SEND = 'email_send';
-    /** Read access to lists and subscribers */
-    static SCOPE_LIST_AND_SUBSCRIBERS_READ = 'list_and_subscribers_read';
-    /** Write access to lists and subscribers */
-    static SCOPE_LIST_AND_SUBSCRIBERS_WRITE = 'list_and_subscribers_write';
+    /** Read access to SMS functionality */
+    static SCOPE_SMS_READ = 'sms_read';
+    /** Write access to SMS functionality */
+    static SCOPE_SMS_WRITE = 'sms_write';
+    /** Permission to send SMS messages */
+    static SCOPE_SMS_SEND = 'sms_send';
+    /** Read access to push notifications */
+    static SCOPE_PUSH_READ = 'push_read';
+    /** Write access to push notifications */
+    static SCOPE_PUSH_WRITE = 'push_write';
+    /** Permission to send push notifications */
+    static SCOPE_PUSH_SEND = 'push_send';
+    /** Read access to social media */
+    static SCOPE_SOCIAL_READ = 'social_read';
+    /** Write access to social media */
+    static SCOPE_SOCIAL_WRITE = 'social_write';
+    /** Permission to publish to social media */
+    static SCOPE_SOCIAL_PUBLISH = 'social_publish';
+    /** Read access to OTT (Over-The-Top) chat messaging */
+    static SCOPE_OTT_READ = 'ott_read';
+    /** Permission to send OTT messages */
+    static SCOPE_OTT_SEND = 'ott_send';
+    // Data & Content Scopes
     /** Read access to data extensions */
     static SCOPE_DATA_EXTENSIONS_READ = 'data_extensions_read';
     /** Write access to data extensions */
     static SCOPE_DATA_EXTENSIONS_WRITE = 'data_extensions_write';
-    /** Read access to saved content */
-    static SCOPE_SAVED_CONTENT_READ = 'saved_content_read';
-    /** Write access to saved content */
-    static SCOPE_SAVED_CONTENT_WRITE = 'saved_content_write';
-    /** Read access to automations */
-    static SCOPE_AUTOMATIONS_READ = 'automations_read';
-    /** Write access to automations */
-    static SCOPE_AUTOMATIONS_WRITE = 'automations_write';
-    /** Execute automations */
-    static SCOPE_AUTOMATIONS_EXECUTE = 'automations_execute';
-    /** Read access to journeys */
-    static SCOPE_JOURNEYS_READ = 'journeys_read';
-    /** Write access to journeys */
-    static SCOPE_JOURNEYS_WRITE = 'journeys_write';
-    /** Execute/publish journeys */
-    static SCOPE_JOURNEYS_EXECUTE = 'journeys_execute';
+    /** Read access to audiences */
+    static SCOPE_AUDIENCES_READ = 'audiences_read';
+    /** Write access to audiences */
+    static SCOPE_AUDIENCES_WRITE = 'audiences_write';
+    /** Read access to lists and subscribers */
+    static SCOPE_LIST_AND_SUBSCRIBERS_READ = 'list_and_subscribers_read';
+    /** Write access to lists and subscribers */
+    static SCOPE_LIST_AND_SUBSCRIBERS_WRITE = 'list_and_subscribers_write';
+    /** Read access to file locations */
+    static SCOPE_FILE_LOCATIONS_READ = 'file_locations_read';
+    /** Write access to file locations */
+    static SCOPE_FILE_LOCATIONS_WRITE = 'file_locations_write';
     /** Read access to tracking events */
     static SCOPE_TRACKING_EVENTS_READ = 'tracking_events_read';
-    /** Read access to webhooks */
-    static SCOPE_WEBHOOKS_READ = 'webhooks_read';
-    /** Write access to webhooks */
-    static SCOPE_WEBHOOKS_WRITE = 'webhooks_write';
     /** Read access to documents and images */
     static SCOPE_DOCUMENTS_AND_IMAGES_READ = 'documents_and_images_read';
     /** Write access to documents and images */
     static SCOPE_DOCUMENTS_AND_IMAGES_WRITE = 'documents_and_images_write';
+    /** Read access to saved content */
+    static SCOPE_SAVED_CONTENT_READ = 'saved_content_read';
+    /** Write access to saved content */
+    static SCOPE_SAVED_CONTENT_WRITE = 'saved_content_write';
+    // Automation & Journey Scopes
+    /** Execute automations */
+    static SCOPE_AUTOMATIONS_EXECUTE = 'automations_execute';
+    /** Read access to automations */
+    static SCOPE_AUTOMATIONS_READ = 'automations_read';
+    /** Write access to automations */
+    static SCOPE_AUTOMATIONS_WRITE = 'automations_write';
+    /** Execute/publish journeys */
+    static SCOPE_JOURNEYS_EXECUTE = 'journeys_execute';
+    /** Read access to journeys */
+    static SCOPE_JOURNEYS_READ = 'journeys_read';
+    /** Write access to journeys */
+    static SCOPE_JOURNEYS_WRITE = 'journeys_write';
+    // Administrative & Provisioning Scopes
+    /** Read access to users */
+    static SCOPE_USERS_READ = 'users_read';
+    /** Write access to users */
+    static SCOPE_USERS_WRITE = 'users_write';
+    /** Read access to organizations */
+    static SCOPE_ORGANIZATIONS_READ = 'organizations_read';
+    /** Write access to organizations */
+    static SCOPE_ORGANIZATIONS_WRITE = 'organizations_write';
+    /** Write access to workflows */
+    static SCOPE_WORKFLOWS_WRITE = 'workflows_write';
+    // Additional Scopes
+    /** Read access to webhooks */
+    static SCOPE_WEBHOOKS_READ = 'webhooks_read';
+    /** Write access to webhooks */
+    static SCOPE_WEBHOOKS_WRITE = 'webhooks_write';
     /** Offline access (for refresh tokens) */
     static SCOPE_OFFLINE = 'offline';
     /**
