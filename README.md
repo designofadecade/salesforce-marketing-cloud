@@ -38,7 +38,11 @@ const client = new SalesForceClient({
   clientId: 'your-client-id',
   clientSecret: 'your-client-secret',
   accountId: 'your-account-id',
-  scope: 'your-scope' // optional
+  // Scope is optional - use built-in constants or omit to use all package permissions
+  scope: SalesForceClient.buildScope([
+    SalesForceClient.SCOPE_EMAIL_READ,
+    SalesForceClient.SCOPE_DATA_EXTENSIONS_WRITE
+  ])
 });
 
 // Use the client directly
