@@ -44,7 +44,7 @@ export default class SalesForceClient {
      * const created = await client.api('/asset/v1/content/assets', 'POST', { name: 'New Asset' });
      * ```
      */
-    api<T = any>(endpoint: string, method?: string, body?: Record<string, any> | null): Promise<T>;
+    api<T = any>(endpoint: string, method?: string, body?: Record<string, any> | Record<string, any>[] | null): Promise<T>;
     /**
      * Retrieves available API endpoints for the authenticated instance
      *
