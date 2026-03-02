@@ -39,21 +39,72 @@ describe('AutomationStudio', () => {
     });
 
     describe('getAll', () => {
-        it('should get all automations', async () => {
-            const mockAutomations = {
-                count: 2,
+        it('should get all automations with automatic pagination', async () => {
+            const mockPage1 = {
+                count: 4,
+                page: 1,
+                pageSize: 2,
                 items: [
                     { id: 'auto-1', name: 'Test Automation 1' },
                     { id: 'auto-2', name: 'Test Automation 2' },
                 ],
+                links: { next: true },
             };
 
-            (mockSFClient.api as any).mockResolvedValueOnce(mockAutomations);
+            const mockPage2 = {
+                count: 4,
+                page: 2,
+                pageSize: 2,
+                items: [
+                    { id: 'auto-3', name: 'Test Automation 3' },
+                    { id: 'auto-4', name: 'Test Automation 4' },
+                ],
+                links: { next: false },
+            };
+
+            (mockSFClient.api as any)
+                .mockResolvedValueOnce(mockPage1)
+                .mockResolvedValueOnce(mockPage2);
 
             const result = await automationStudio.getAll();
 
-            expect(result).toEqual(mockAutomations);
-            expect(mockSFClient.api).toHaveBeenCalledWith('/automation/v1/automations', 'GET');
+            expect(result).toEqual([
+                { id: 'auto-1', name: 'Test Automation 1' },
+                { id: 'auto-2', name: 'Test Automation 2' },
+                { id: 'auto-3', name: 'Test Automation 3' },
+                { id: 'auto-4', name: 'Test Automation 4' },
+            ]);
+            expect(mockSFClient.api).toHaveBeenCalledWith(
+                '/automation/v1/automations?$page=1&$pageSize=500',
+                'GET'
+            );
+            expect(mockSFClient.api).toHaveBeenCalledWith(
+                '/automation/v1/automations?$page=2&$pageSize=500',
+                'GET'
+            );
+        });
+
+        it('should get specific page when page parameter is provided', async () => {
+            const mockPage = {
+                count: 100,
+                page: 1,
+                pageSize: 50,
+                items: [
+                    { id: 'auto-1', name: 'Test Automation 1' },
+                    { id: 'auto-2', name: 'Test Automation 2' },
+                ],
+                links: { next: true },
+            };
+
+            (mockSFClient.api as any).mockResolvedValueOnce(mockPage);
+
+            const result = await automationStudio.getAll({ page: 1, pageSize: 50 });
+
+            expect(result).toEqual(mockPage);
+            expect(mockSFClient.api).toHaveBeenCalledWith(
+                '/automation/v1/automations?$page=1&$pageSize=50',
+                'GET'
+            );
         });
     });
 
