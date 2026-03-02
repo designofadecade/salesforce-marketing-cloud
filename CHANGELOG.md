@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-03-02
+
+### Added
+- Pagination support for `AutomationStudio.getAll()` method
+- Optional `page` and `pageSize` parameters to retrieve specific pages of automations
+- Pagination metadata fields (`page`, `pageSize`, `links`) to `AutomationsListResponse` type
+
+### Changed
+- `AutomationStudio.getAll()` now automatically fetches all automations across multiple pages when called without parameters
+- `AutomationStudio.getAll()` returns `AutomationResponse[]` when fetching all, or `AutomationsListResponse` when requesting a specific page
+- Default page size increased to 500 items per request for better performance
+
 ## [1.3.0] - 2026-03-02
 
 ### Added

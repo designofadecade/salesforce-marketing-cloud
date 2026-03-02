@@ -41,18 +41,29 @@ export default class AutomationStudio {
      */
     endpoints(): Promise<any>;
     /**
-     * Retrieves all automations in the account
+     * Retrieves automations in the account
      *
-     * @returns A promise that resolves to the list of automations
+     * @param options - Optional pagination parameters
+     * @param options.page - Specific page number to retrieve (1-based)
+     * @param options.pageSize - Number of items per page (default: 500)
+     * @returns A promise that resolves to automations list response or array of all automations
      * @throws {SalesForceAPIError} If the API request fails
      *
      * @example
      * ```typescript
-     * const automations = await automationStudio.getAll();
-     * console.log(`Found ${automations.count} automations`);
+     * // Get all automations (automatic pagination)
+     * const allAutomations = await automationStudio.getAll();
+     * console.log(`Found ${allAutomations.length} automations`);
+     *
+     * // Get specific page
+     * const pageData = await automationStudio.getAll({ page: 1, pageSize: 50 });
+     * console.log(`Page 1: ${pageData.items.length} of ${pageData.count} total`);
      * ```
      */
-    getAll(): Promise<AutomationsListResponse>;
+    getAll(options?: {
+        page?: number;
+        pageSize?: number;
+    }): Promise<AutomationResponse[] | AutomationsListResponse>;
     /**
      * Retrieves a specific automation by its external key
      *

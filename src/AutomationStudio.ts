@@ -76,23 +76,54 @@ export default class AutomationStudio {
     }
 
     /**
-     * Retrieves all automations in the account
+     * Retrieves automations in the account
      *
-     * @returns A promise that resolves to the list of automations
+     * @param options - Optional pagination parameters
+     * @param options.page - Specific page number to retrieve (1-based)
+     * @param options.pageSize - Number of items per page (default: 500)
+     * @returns A promise that resolves to automations list response or array of all automations
      * @throws {SalesForceAPIError} If the API request fails
      *
      * @example
      * ```typescript
-     * const automations = await automationStudio.getAll();
-     * console.log(`Found ${automations.count} automations`);
+     * // Get all automations (automatic pagination)
+     * const allAutomations = await automationStudio.getAll();
+     * console.log(`Found ${allAutomations.length} automations`);
+     *
+     * // Get specific page
+     * const pageData = await automationStudio.getAll({ page: 1, pageSize: 50 });
+     * console.log(`Page 1: ${pageData.items.length} of ${pageData.count} total`);
      * ```
      */
-    async getAll(): Promise<AutomationsListResponse> {
+    async getAll(options?: { page?: number; pageSize?: number }): Promise<AutomationResponse[] | AutomationsListResponse> {
+        const { page: requestedPage, pageSize = 500 } = options || {};
+
         try {
-            return await this.#SF.api<AutomationsListResponse>(
-                `/automation/v1/automations`,
-                'GET'
-            );
+            // If specific page requested, return single page response
+            if (requestedPage !== undefined) {
+                return await this.#SF.api<AutomationsListResponse>(
+                    `/automation/v1/automations?$page=${requestedPage}&$pageSize=${pageSize}`,
+                    'GET'
+                );
+            }
+
+            // Otherwise, fetch all pages automatically
+            let allAutomations: AutomationResponse[] = [];
+            let page = 1;
+            let hasMore = true;
+
+            while (hasMore) {
+                const data = await this.#SF.api<AutomationsListResponse>(
+                    `/automation/v1/automations?$page=${page}&$pageSize=${pageSize}`,
+                    'GET'
+                );
+
+                allAutomations = allAutomations.concat(data.items || []);
+                hasMore = !!data.links?.next;
+                page++;
+            }
+
+            return allAutomations;
         } catch (error) {
             if (error instanceof SalesForceAPIError) {
                 throw error;

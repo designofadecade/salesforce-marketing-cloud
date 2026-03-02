@@ -126,7 +126,13 @@ export interface AutomationResponse {
  */
 export interface AutomationsListResponse {
     count: number;
+    page?: number;
+    pageSize?: number;
     items: AutomationResponse[];
+    links?: {
+        next?: string | boolean;
+        self?: string;
+    };
 }
 /**
  * Automation activity configuration
