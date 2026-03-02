@@ -513,6 +513,15 @@ export default class DataExtensions {
         }
 
         const text = JSON.stringify(data);
+        const maxSize = count * size;
+
+        if (text.length > maxSize) {
+            throw new SalesForceConfigError(
+                `Data size (${text.length} characters) exceeds maximum allowed size (${maxSize} characters). ` +
+                `Increase count or size parameters, or reduce data size.`
+            );
+        }
+
         const chunks: string[] = [];
 
         for (let i = 0; i < text.length; i += size) {

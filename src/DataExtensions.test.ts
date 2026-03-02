@@ -327,5 +327,14 @@ describe('DataExtensions', () => {
             const combined = result.content1 + result.content2 + result.content3 + result.content4;
             expect(combined).toContain('xxxx');
         });
+
+        it('should throw error when data exceeds count x size limit', () => {
+            // Create data that exceeds 4 * 10 = 40 characters
+            const largeData = { data: 'x'.repeat(100) };
+            
+            expect(() => {
+                DataExtensions.jsonToValues(largeData, 'json', 4, 10);
+            }).toThrow('Data size (111 characters) exceeds maximum allowed size (40 characters)');
+        });
     });
 });

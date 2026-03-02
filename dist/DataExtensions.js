@@ -392,6 +392,11 @@ export default class DataExtensions {
             throw new SalesForceConfigError('Size must be at least 1');
         }
         const text = JSON.stringify(data);
+        const maxSize = count * size;
+        if (text.length > maxSize) {
+            throw new SalesForceConfigError(`Data size (${text.length} characters) exceeds maximum allowed size (${maxSize} characters). ` +
+                `Increase count or size parameters, or reduce data size.`);
+        }
         const chunks = [];
         for (let i = 0; i < text.length; i += size) {
             chunks.push(text.slice(i, i + size));
