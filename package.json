@@ -1,6 +1,6 @@
 {
   "name": "@designofadecade/salesforce-marketing-cloud",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Salesforce Marketing Cloud SDK for Node.js",
   "type": "module",
   "main": "./dist/index.js",
@@ -43,12 +43,12 @@
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
-    "@vitest/coverage-v8": "^2.0.0",
-    "@vitest/ui": "^2.0.0",
+    "@vitest/coverage-v8": "^4.1.4",
+    "@vitest/ui": "^4.1.4",
     "eslint": "^8.57.0",
     "prettier": "^3.2.5",
     "typescript": "^5.4.5",
-    "vitest": "^2.0.0"
+    "vitest": "^4.1.4"
   },
   "repository": {
     "type": "git",

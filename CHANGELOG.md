@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-04-15
+
+### Security
+- Updated `soap` from 1.7.1 to 1.8.0 to fix critical security vulnerabilities
+- Fixed critical SSRF vulnerability in `axios` (CVE CVSS 9.1) - updated to 1.15.0
+- Fixed high severity XML injection in `@xmldom/xmldom` (CVSS 7.7) - updated to 0.8.12
+- Fixed high severity HTTP response splitting in `axios` (CVSS 7.0)
+- Updated dev dependencies (`vitest`, `@vitest/coverage-v8`, `@vitest/ui`) to 4.1.4 to address moderate security issues in testing infrastructure
+
 ## [1.4.0] - 2026-03-02
 
 ### Added
