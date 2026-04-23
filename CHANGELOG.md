@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2026-04-23
+
+### Security
+- Fixed 4 high-severity vulnerabilities in `@xmldom/xmldom` (CVE CVSS 8.7)
+  - Uncontrolled Recursion (CWE-674)
+  - XML Injection vulnerabilities (CWE-91)
+- Updated `@xmldom/xmldom` from 0.8.12 to 0.8.13 (transitive dependency via `soap`)
+
 ## [1.6.0] - 2026-04-15
 
 ### Security
@@ -95,7 +103,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Node.js >= 24.0.0
 - ES Modules support
 
-[Unreleased]: https://github.com/designofadecade/salesforce-marketing-cloud/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/designofadecade/salesforce-marketing-cloud/compare/v1.6.1...HEAD
+[1.6.1]: https://github.com/designofadecade/salesforce-marketing-cloud/compare/v1.6.0...v1.6.1
+[1.6.0]: https://github.com/designofadecade/salesforce-marketing-cloud/compare/v1.4.0...v1.6.0
+[1.4.0]: https://github.com/designofadecade/salesforce-marketing-cloud/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/designofadecade/salesforce-marketing-cloud/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/designofadecade/salesforce-marketing-cloud/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/designofadecade/salesforce-marketing-cloud/compare/v1.0.4...v1.1.0
 [1.0.4]: https://github.com/designofadecade/salesforce-marketing-cloud/releases/tag/v1.0.4
 [1.0.0]: https://github.com/designofadecade/salesforce-marketing-cloud/releases/tag/v1.0.0
