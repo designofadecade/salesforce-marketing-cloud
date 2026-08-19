@@ -5,10 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.0] - 2026-08-19
+## [2.0.0] - 2026-08-19
 
 ### Added
-- New `bulkDelete()` method to `DataExtensions` class for deleting multiple records in a single API call
+- New `bulkDelete()` method to `DataExtensions` class for deleting multiple records with automatic batching
 - Automatic batching in `bulkDelete()` to handle large datasets safely (default: 1,000 records per batch)
 - Configurable batch size parameter to optimize for different use cases
 - Significantly improves performance for bulk delete operations (reduces N sequential API calls to batched calls)
@@ -17,7 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `clearRecords()` method now uses `bulkDelete()` internally for dramatically improved performance
 - `clearRecords()` now completes in <5 seconds instead of 90+ seconds for large data extensions
-- `bulkDelete()` now returns an array of API responses (one per batch) instead of a single response
+
+### Breaking Changes
+- **`bulkDelete()` return type changed from `Promise<any>` to `Promise<any[]>`**
+  - Now returns an array of API responses (one per batch) instead of a single response
+  - For datasets under 1,000 records, returns array with single response: `[response]`
+  - For larger datasets, returns array with multiple responses: `[response1, response2, ...]`
 
 ### Performance
 - Bulk delete operations now complete in <5 seconds instead of 90+ seconds for large data extensions
