@@ -199,7 +199,7 @@ export default class DataExtensions {
      */
     getAllRows(externalKey: string): Promise<DataExtensionRow[]>;
     /**
-     * Clears all records from a data extension
+     * Clears all records from a data extension using bulk delete for improved performance
      *
      * @param externalKey - The external key of the data extension
      * @param primaryKey - The name of the primary key field (default: 'key')

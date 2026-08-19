@@ -501,7 +501,7 @@ export default class DataExtensions {
     }
 
     /**
-     * Clears all records from a data extension
+     * Clears all records from a data extension using bulk delete for improved performance
      *
      * @param externalKey - The external key of the data extension
      * @param primaryKey - The name of the primary key field (default: 'key')
@@ -524,11 +524,22 @@ export default class DataExtensions {
 
         const allRows = await this.getAllRows(externalKey);
 
-        for (const row of allRows) {
-            const primaryKeyValue = row.keys[primaryKey];
-            if (primaryKeyValue) {
-                await this.delete(externalKey, primaryKey, String(primaryKeyValue));
-            }
+        if (allRows.length === 0) {
+            return;
+        }
+
+        const itemsToDelete = allRows
+            .map(row => {
+                const primaryKeyValue = row.keys[primaryKey];
+                if (primaryKeyValue) {
+                    return { keys: { [primaryKey]: String(primaryKeyValue) } };
+                }
+                return null;
+            })
+            .filter((item): item is { keys: Record<string, any> } => item !== null);
+
+        if (itemsToDelete.length > 0) {
+            await this.bulkDelete(externalKey, itemsToDelete);
         }
     }
 

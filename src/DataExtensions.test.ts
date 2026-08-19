@@ -370,7 +370,7 @@ describe('DataExtensions', () => {
     });
 
     describe('clearRecords', () => {
-        it('should clear all records from data extension', async () => {
+        it('should clear all records from data extension using bulkDelete', async () => {
             const mockRows = {
                 items: [
                     { keys: { key: 'row1' } },
@@ -381,21 +381,24 @@ describe('DataExtensions', () => {
 
             (mockSFClient.api as any)
                 .mockResolvedValueOnce(mockRows)
-                .mockResolvedValueOnce({ message: 'Deleted' })
                 .mockResolvedValueOnce({ message: 'Deleted' });
 
             await dataExtensions.clearRecords('test-key');
 
-            expect(mockSFClient.api).toHaveBeenCalledTimes(3);
-            expect(mockSFClient.api).toHaveBeenCalledWith(
-                '/hub/v1/dataevents/key:test-key/rowset/delete',
-                'POST',
-                [{ keys: { key: 'row1' } }]
+            expect(mockSFClient.api).toHaveBeenCalledTimes(2);
+            expect(mockSFClient.api).toHaveBeenNthCalledWith(
+                1,
+                '/data/v1/customobjectdata/key/test-key/rowset?$pageSize=500&$page=1',
+                'GET'
             );
-            expect(mockSFClient.api).toHaveBeenCalledWith(
+            expect(mockSFClient.api).toHaveBeenNthCalledWith(
+                2,
                 '/hub/v1/dataevents/key:test-key/rowset/delete',
                 'POST',
-                [{ keys: { key: 'row2' } }]
+                [
+                    { keys: { key: 'row1' } },
+                    { keys: { key: 'row2' } }
+                ]
             );
         });
 
@@ -454,7 +457,7 @@ describe('DataExtensions', () => {
         it('should throw error when data exceeds count x size limit', () => {
             // Create data that exceeds 4 * 10 = 40 characters
             const largeData = { data: 'x'.repeat(100) };
-            
+
             expect(() => {
                 DataExtensions.jsonToValues(largeData, 'json', 4, 10);
             }).toThrow('Data size (111 characters) exceeds maximum allowed size (40 characters)');

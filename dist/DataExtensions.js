@@ -378,7 +378,7 @@ export default class DataExtensions {
         }
     }
     /**
-     * Clears all records from a data extension
+     * Clears all records from a data extension using bulk delete for improved performance
      *
      * @param externalKey - The external key of the data extension
      * @param primaryKey - The name of the primary key field (default: 'key')
@@ -398,11 +398,20 @@ export default class DataExtensions {
             throw new SalesForceConfigError('Primary key field name is required');
         }
         const allRows = await this.getAllRows(externalKey);
-        for (const row of allRows) {
+        if (allRows.length === 0) {
+            return;
+        }
+        const itemsToDelete = allRows
+            .map(row => {
             const primaryKeyValue = row.keys[primaryKey];
             if (primaryKeyValue) {
-                await this.delete(externalKey, primaryKey, String(primaryKeyValue));
+                return { keys: { [primaryKey]: String(primaryKeyValue) } };
             }
+            return null;
+        })
+            .filter((item) => item !== null);
+        if (itemsToDelete.length > 0) {
+            await this.bulkDelete(externalKey, itemsToDelete);
         }
     }
     /**

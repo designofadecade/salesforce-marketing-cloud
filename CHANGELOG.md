@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Significantly improves performance for bulk delete operations (reduces N sequential API calls to 1 bulk call)
 - Follows the same pattern as `insert()` method, accepting an array of items to delete
 
+### Changed
+- `clearRecords()` method now uses `bulkDelete()` internally for dramatically improved performance
+- `clearRecords()` now completes in <5 seconds instead of 90+ seconds for large data extensions
+
 ### Performance
 - Bulk delete operations now complete in <5 seconds instead of 90+ seconds for large data extensions
 
