@@ -156,13 +156,17 @@ export default class DataExtensions {
      */
     delete(externalKey: string, primaryKey: string, primaryKeyValue: string): Promise<any>;
     /**
-     * Deletes multiple records from a data extension in a single API call
+     * Deletes multiple records from a data extension with automatic batching
+     *
+     * Automatically splits large datasets into batches to stay within API limits.
+     * Default batch size is 1,000 records per API call.
      *
      * @param externalKey - The external key of the data extension
      * @param items - Array of items to delete with their key values
-     * @returns A promise that resolves to the API response
+     * @param batchSize - Maximum number of records per batch (default: 1000)
+     * @returns A promise that resolves to an array of API responses (one per batch)
      * @throws {SalesForceConfigError} If required parameters are missing or invalid
-     * @throws {SalesForceAPIError} If the API request fails
+     * @throws {SalesForceAPIError} If any API request fails
      *
      * @example
      * ```typescript
@@ -178,11 +182,14 @@ export default class DataExtensions {
      *   { keys: { subscriberkey: 'user@example.com' } },
      *   { keys: { subscriberkey: 'other@example.com' } }
      * ]);
+     *
+     * // Custom batch size for very large datasets
+     * await dataExtensions.bulkDelete('customer-de', largeArray, 500);
      * ```
      */
     bulkDelete(externalKey: string, items: Array<{
         keys: Record<string, any>;
-    }>): Promise<any>;
+    }>, batchSize?: number): Promise<any[]>;
     /**
      * Retrieves all rows from a data extension with automatic pagination
      *

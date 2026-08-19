@@ -243,7 +243,7 @@ describe('DataExtensions', () => {
 
             const result = await dataExtensions.bulkDelete('test-key', items);
 
-            expect(result).toEqual(mockResponse);
+            expect(result).toEqual([mockResponse]);
             expect(mockSFClient.api).toHaveBeenCalledWith(
                 '/hub/v1/dataevents/key:test-key/rowset/delete',
                 'POST',
@@ -285,6 +285,52 @@ describe('DataExtensions', () => {
             );
         });
 
+        it('should automatically batch large datasets', async () => {
+            // Create 2500 items (should split into 3 batches with default batch size of 1000)
+            const items = Array.from({ length: 2500 }, (_, i) => ({
+                keys: { id: `id_${i}` }
+            }));
+
+            const mockResponse1 = { message: 'Batch 1 deleted' };
+            const mockResponse2 = { message: 'Batch 2 deleted' };
+            const mockResponse3 = { message: 'Batch 3 deleted' };
+
+            (mockSFClient.api as any)
+                .mockResolvedValueOnce(mockResponse1)
+                .mockResolvedValueOnce(mockResponse2)
+                .mockResolvedValueOnce(mockResponse3);
+
+            const result = await dataExtensions.bulkDelete('test-key', items);
+
+            expect(result).toHaveLength(3);
+            expect(result).toEqual([mockResponse1, mockResponse2, mockResponse3]);
+            expect(mockSFClient.api).toHaveBeenCalledTimes(3);
+
+            // Verify batch sizes
+            expect((mockSFClient.api as any).mock.calls[0][2]).toHaveLength(1000);
+            expect((mockSFClient.api as any).mock.calls[1][2]).toHaveLength(1000);
+            expect((mockSFClient.api as any).mock.calls[2][2]).toHaveLength(500);
+        });
+
+        it('should support custom batch size', async () => {
+            const items = Array.from({ length: 150 }, (_, i) => ({
+                keys: { id: `id_${i}` }
+            }));
+
+            (mockSFClient.api as any)
+                .mockResolvedValueOnce({ message: 'Batch 1' })
+                .mockResolvedValueOnce({ message: 'Batch 2' })
+                .mockResolvedValueOnce({ message: 'Batch 3' });
+
+            const result = await dataExtensions.bulkDelete('test-key', items, 50);
+
+            expect(result).toHaveLength(3);
+            expect(mockSFClient.api).toHaveBeenCalledTimes(3);
+            expect((mockSFClient.api as any).mock.calls[0][2]).toHaveLength(50);
+            expect((mockSFClient.api as any).mock.calls[1][2]).toHaveLength(50);
+            expect((mockSFClient.api as any).mock.calls[2][2]).toHaveLength(50);
+        });
+
         it('should throw error when external key is missing', async () => {
             const items = [{ keys: { id: '123' } }];
 
@@ -303,6 +349,14 @@ describe('DataExtensions', () => {
             await expect(
                 dataExtensions.bulkDelete('test-key', null as any)
             ).rejects.toThrow('Items array is required and must not be empty');
+        });
+
+        it('should throw error when batch size is less than 1', async () => {
+            const items = [{ keys: { id: '123' } }];
+
+            await expect(dataExtensions.bulkDelete('test-key', items, 0)).rejects.toThrow(
+                'Batch size must be at least 1'
+            );
         });
 
         it('should handle API errors appropriately', async () => {

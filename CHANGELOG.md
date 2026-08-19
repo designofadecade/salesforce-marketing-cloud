@@ -9,15 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - New `bulkDelete()` method to `DataExtensions` class for deleting multiple records in a single API call
-- Significantly improves performance for bulk delete operations (reduces N sequential API calls to 1 bulk call)
+- Automatic batching in `bulkDelete()` to handle large datasets safely (default: 1,000 records per batch)
+- Configurable batch size parameter to optimize for different use cases
+- Significantly improves performance for bulk delete operations (reduces N sequential API calls to batched calls)
 - Follows the same pattern as `insert()` method, accepting an array of items to delete
 
 ### Changed
 - `clearRecords()` method now uses `bulkDelete()` internally for dramatically improved performance
 - `clearRecords()` now completes in <5 seconds instead of 90+ seconds for large data extensions
+- `bulkDelete()` now returns an array of API responses (one per batch) instead of a single response
 
 ### Performance
 - Bulk delete operations now complete in <5 seconds instead of 90+ seconds for large data extensions
+- Automatic batching prevents API limit errors for datasets exceeding 1,000 records
 
 ## [1.6.1] - 2026-04-23
 
