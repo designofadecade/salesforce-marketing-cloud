@@ -132,6 +132,28 @@ describe('DataExtensions', () => {
                 ]
             );
         });
+
+        it('should encode special characters in external key', async () => {
+            (mockSFClient.api as any).mockResolvedValueOnce({});
+
+            await dataExtensions.update(
+                'test:key/with:special',
+                'id',
+                '123',
+                { name: 'Updated Name' }
+            );
+
+            expect(mockSFClient.api).toHaveBeenCalledWith(
+                '/hub/v1/dataevents/key:test%3Akey%2Fwith%3Aspecial/rowset',
+                'POST',
+                [
+                    {
+                        keys: { id: '123' },
+                        values: { name: 'Updated Name' },
+                    },
+                ]
+            );
+        });
     });
 
     describe('insertAsync', () => {
@@ -191,6 +213,107 @@ describe('DataExtensions', () => {
                 '/hub/v1/dataevents/key:test-key/rowset/delete',
                 'POST',
                 [{ keys: { id: '123' } }]
+            );
+        });
+
+        it('should encode special characters in external key', async () => {
+            (mockSFClient.api as any).mockResolvedValueOnce({});
+
+            await dataExtensions.delete('test:key/with:special', 'id', '123');
+
+            expect(mockSFClient.api).toHaveBeenCalledWith(
+                '/hub/v1/dataevents/key:test%3Akey%2Fwith%3Aspecial/rowset/delete',
+                'POST',
+                [{ keys: { id: '123' } }]
+            );
+        });
+    });
+
+    describe('bulkDelete', () => {
+        it('should delete multiple records successfully', async () => {
+            const items = [
+                { keys: { key: 'campaign_1' } },
+                { keys: { key: 'campaign_2' } },
+                { keys: { key: 'campaign_3' } },
+            ];
+
+            const mockResponse = { message: 'Deleted successfully' };
+
+            (mockSFClient.api as any).mockResolvedValueOnce(mockResponse);
+
+            const result = await dataExtensions.bulkDelete('test-key', items);
+
+            expect(result).toEqual(mockResponse);
+            expect(mockSFClient.api).toHaveBeenCalledWith(
+                '/hub/v1/dataevents/key:test-key/rowset/delete',
+                'POST',
+                items
+            );
+        });
+
+        it('should encode special characters in external key', async () => {
+            const items = [
+                { keys: { id: '123' } },
+                { keys: { id: '456' } },
+            ];
+
+            (mockSFClient.api as any).mockResolvedValueOnce({});
+
+            await dataExtensions.bulkDelete('test:key/with:special', items);
+
+            expect(mockSFClient.api).toHaveBeenCalledWith(
+                '/hub/v1/dataevents/key:test%3Akey%2Fwith%3Aspecial/rowset/delete',
+                'POST',
+                items
+            );
+        });
+
+        it('should handle different primary key fields', async () => {
+            const items = [
+                { keys: { subscriberkey: 'user@example.com' } },
+                { keys: { subscriberkey: 'other@example.com' } },
+            ];
+
+            (mockSFClient.api as any).mockResolvedValueOnce({});
+
+            await dataExtensions.bulkDelete('customer-de', items);
+
+            expect(mockSFClient.api).toHaveBeenCalledWith(
+                '/hub/v1/dataevents/key:customer-de/rowset/delete',
+                'POST',
+                items
+            );
+        });
+
+        it('should throw error when external key is missing', async () => {
+            const items = [{ keys: { id: '123' } }];
+
+            await expect(dataExtensions.bulkDelete('', items)).rejects.toThrow(
+                'Data extension external key is required'
+            );
+        });
+
+        it('should throw error when items array is empty', async () => {
+            await expect(dataExtensions.bulkDelete('test-key', [])).rejects.toThrow(
+                'Items array is required and must not be empty'
+            );
+        });
+
+        it('should throw error when items is not an array', async () => {
+            await expect(
+                dataExtensions.bulkDelete('test-key', null as any)
+            ).rejects.toThrow('Items array is required and must not be empty');
+        });
+
+        it('should handle API errors appropriately', async () => {
+            const items = [{ keys: { id: '123' } }];
+
+            (mockSFClient.api as any).mockRejectedValueOnce(
+                new Error('Network error')
+            );
+
+            await expect(dataExtensions.bulkDelete('test-key', items)).rejects.toThrow(
+                'Failed to bulk delete data: Network error'
             );
         });
     });

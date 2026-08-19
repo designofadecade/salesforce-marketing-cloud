@@ -156,6 +156,34 @@ export default class DataExtensions {
      */
     delete(externalKey: string, primaryKey: string, primaryKeyValue: string): Promise<any>;
     /**
+     * Deletes multiple records from a data extension in a single API call
+     *
+     * @param externalKey - The external key of the data extension
+     * @param items - Array of items to delete with their key values
+     * @returns A promise that resolves to the API response
+     * @throws {SalesForceConfigError} If required parameters are missing or invalid
+     * @throws {SalesForceAPIError} If the API request fails
+     *
+     * @example
+     * ```typescript
+     * // Delete multiple records by key
+     * await dataExtensions.bulkDelete('customer-de', [
+     *   { keys: { key: 'campaign_1' } },
+     *   { keys: { key: 'campaign_2' } },
+     *   { keys: { key: 'campaign_3' } }
+     * ]);
+     *
+     * // Using different primary key field
+     * await dataExtensions.bulkDelete('customer-de', [
+     *   { keys: { subscriberkey: 'user@example.com' } },
+     *   { keys: { subscriberkey: 'other@example.com' } }
+     * ]);
+     * ```
+     */
+    bulkDelete(externalKey: string, items: Array<{
+        keys: Record<string, any>;
+    }>): Promise<any>;
+    /**
      * Retrieves all rows from a data extension with automatic pagination
      *
      * @param externalKey - The external key of the data extension

@@ -170,7 +170,7 @@ export default class DataExtensions {
             throw new SalesForceConfigError('Update values are required');
         }
         try {
-            return await this.#SF.api(`/hub/v1/dataevents/key:${externalKey}/rowset`, 'POST', [
+            return await this.#SF.api(`/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset`, 'POST', [
                 {
                     keys: {
                         [primaryKey]: primaryKeyValue,
@@ -283,7 +283,7 @@ export default class DataExtensions {
             throw new SalesForceConfigError('Primary key value is required');
         }
         try {
-            return await this.#SF.api(`/hub/v1/dataevents/key:${externalKey}/rowset/delete`, 'POST', [
+            return await this.#SF.api(`/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`, 'POST', [
                 {
                     keys: {
                         [primaryKey]: primaryKeyValue,
@@ -296,6 +296,48 @@ export default class DataExtensions {
                 throw error;
             }
             throw new SalesForceAPIError(`Failed to delete data: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/hub/v1/dataevents/key:${externalKey}/rowset/delete`, 'POST');
+        }
+    }
+    /**
+     * Deletes multiple records from a data extension in a single API call
+     *
+     * @param externalKey - The external key of the data extension
+     * @param items - Array of items to delete with their key values
+     * @returns A promise that resolves to the API response
+     * @throws {SalesForceConfigError} If required parameters are missing or invalid
+     * @throws {SalesForceAPIError} If the API request fails
+     *
+     * @example
+     * ```typescript
+     * // Delete multiple records by key
+     * await dataExtensions.bulkDelete('customer-de', [
+     *   { keys: { key: 'campaign_1' } },
+     *   { keys: { key: 'campaign_2' } },
+     *   { keys: { key: 'campaign_3' } }
+     * ]);
+     *
+     * // Using different primary key field
+     * await dataExtensions.bulkDelete('customer-de', [
+     *   { keys: { subscriberkey: 'user@example.com' } },
+     *   { keys: { subscriberkey: 'other@example.com' } }
+     * ]);
+     * ```
+     */
+    async bulkDelete(externalKey, items) {
+        if (!externalKey) {
+            throw new SalesForceConfigError('Data extension external key is required');
+        }
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            throw new SalesForceConfigError('Items array is required and must not be empty');
+        }
+        try {
+            return await this.#SF.api(`/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`, 'POST', items);
+        }
+        catch (error) {
+            if (error instanceof SalesForceAPIError) {
+                throw error;
+            }
+            throw new SalesForceAPIError(`Failed to bulk delete data: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/hub/v1/dataevents/key:${externalKey}/rowset/delete`, 'POST');
         }
     }
     /**
