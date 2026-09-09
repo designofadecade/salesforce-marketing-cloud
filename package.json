@@ -1,6 +1,6 @@
 {
   "name": "@designofadecade/salesforce-marketing-cloud",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Salesforce Marketing Cloud SDK for Node.js",
   "type": "module",
   "main": "./dist/index.js",
@@ -25,7 +25,7 @@
     "format": "prettier --write \"src/**/*.ts\""
   },
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=20.0.0"
   },
   "keywords": [
     "salesforce",
@@ -61,6 +61,8 @@
     "access": "public"
   },
   "files": [
-    "dist"
+    "dist",
+    "src",
+    "!src/**/*.test.ts"
   ]
 }

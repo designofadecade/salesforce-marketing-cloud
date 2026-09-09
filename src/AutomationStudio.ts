@@ -31,6 +31,15 @@ import type {
  * ```
  */
 export default class AutomationStudio {
+    /**
+     * Upper bound on pages fetched by {@link AutomationStudio.getAll}.
+     *
+     * Pagination stops when the API stops advertising a next link. This cap is the
+     * backstop for a server that always advertises one, which would otherwise loop
+     * until the process exhausts memory.
+     */
+    static readonly MAX_PAGES = 1000;
+
     /** Timezone ID for America/Toronto (Eastern Time) */
     static readonly TIME_ZONE_AMERICA_TORONTO = 76;
 
@@ -101,7 +110,23 @@ export default class AutomationStudio {
      * console.log(`Page 1: ${pageData.items.length} of ${pageData.count} total`);
      * ```
      */
-    async getAll(options?: { page?: number; pageSize?: number }): Promise<AutomationResponse[] | AutomationsListResponse> {
+    async getAll(): Promise<AutomationResponse[]>;
+    async getAll(options: {
+        page: number;
+        pageSize?: number;
+    }): Promise<AutomationsListResponse>;
+    async getAll(options: {
+        page?: undefined;
+        pageSize?: number;
+    }): Promise<AutomationResponse[]>;
+    async getAll(options?: {
+        page?: number;
+        pageSize?: number;
+    }): Promise<AutomationResponse[] | AutomationsListResponse>;
+    async getAll(options?: {
+        page?: number;
+        pageSize?: number;
+    }): Promise<AutomationResponse[] | AutomationsListResponse> {
         const { page: requestedPage, pageSize = 500 } = options || {};
 
         try {
@@ -119,6 +144,17 @@ export default class AutomationStudio {
             let hasMore = true;
 
             while (hasMore) {
+                // A server that always advertises a next link would otherwise loop
+                // forever, accumulating results until the process runs out of memory.
+                if (page > AutomationStudio.MAX_PAGES) {
+                    throw new SalesForceAPIError(
+                        `Pagination exceeded ${AutomationStudio.MAX_PAGES} pages; aborting to avoid an unbounded loop`,
+                        500,
+                        '/automation/v1/automations',
+                        'GET'
+                    );
+                }
+
                 const data = await this.#SF.api<AutomationsListResponse>(
                     `/automation/v1/automations?$page=${page}&$pageSize=${pageSize}`,
                     'GET'
@@ -386,8 +422,11 @@ export default class AutomationStudio {
         if (!automationId) {
             throw new SalesForceConfigError('Automation ID is required');
         }
-        // Implementation pending
-        throw new Error('Delete automation not yet implemented');
+        // Implementation pending. Thrown as an SDK error so callers can catch it
+        // alongside every other failure from this class rather than a bare Error.
+        throw new SalesForceConfigError(
+            'AutomationStudio.delete() is not implemented; delete the automation in Marketing Cloud or via the SOAP API'
+        );
     }
 
     /**

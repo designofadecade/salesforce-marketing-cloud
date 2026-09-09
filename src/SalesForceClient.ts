@@ -191,7 +191,8 @@ export default class SalesForceClient {
         body: Record<string, any> | Record<string, any>[] | null = null
     ): Promise<T> {
         if (!endpoint) {
-            throw new SalesForceAPIError('Endpoint is required', 400);
+            // A missing endpoint is a caller mistake, not a response from the API.
+            throw new SalesForceConfigError('Endpoint is required');
         }
 
         if (!this.#authentication || this.#isTokenExpired()) {

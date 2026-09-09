@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A modern, type-safe Node.js SDK for interacting with the Salesforce Marketing Cloud API. Built with TypeScript and designed for Node.js 24+.
+A modern, type-safe Node.js SDK for interacting with the Salesforce Marketing Cloud API. Built with TypeScript, for Node.js 20 and above.
 
 ## Features
 
@@ -23,7 +23,7 @@ npm install @designofadecade/salesforce-marketing-cloud
 
 ### Requirements
 
-- **Node.js** >= 24.0.0
+- **Node.js** >= 20.0.0
 - **ES Modules** support (package uses `"type": "module"`)
 - TypeScript >= 5.0 (if using TypeScript)
 
@@ -269,13 +269,29 @@ AutomationStudio.TIME_ZONE_AMERICA_CHICAGO  // 27 - Central Time
 
 #### Methods
 
-##### `getAll(): Promise<AutomationsListResponse>`
+##### `getAll(options?): Promise<AutomationResponse[] | AutomationsListResponse>`
 
-Gets all automations.
+Gets automations. The return type depends on how it is called, and overloads
+narrow it for you:
+
+- `getAll()` — pages through every automation and resolves to an
+  `AutomationResponse[]`.
+- `getAll({ page, pageSize })` — requests a single page and resolves to an
+  `AutomationsListResponse` (with `items`, `count` and `links`).
 
 ```typescript
+// Every automation, paginated automatically -> AutomationResponse[]
 const automations = await automation.getAll();
+console.log(`Found ${automations.length} automations`);
+
+// A single page -> AutomationsListResponse
+const page = await automation.getAll({ page: 1, pageSize: 50 });
+console.log(`Page 1: ${page.items.length} of ${page.count} total`);
 ```
+
+Automatic pagination stops after `AutomationStudio.MAX_PAGES` (1000) pages and
+throws a `SalesForceAPIError`, guarding against a server that always advertises
+a next link.
 
 ##### `get(externalKey: string): Promise<AutomationResponse>`
 

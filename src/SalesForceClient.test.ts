@@ -105,6 +105,12 @@ describe('SalesForceClient', () => {
         });
     });
 
+    describe('api() validation', () => {
+        it('should throw SalesForceConfigError for an empty endpoint', async () => {
+            await expect(client.api('')).rejects.toThrow(SalesForceConfigError);
+        });
+    });
+
     describe('concurrent authentication', () => {
         // Without an in-flight guard each parallel caller POSTs the client_secret
         // to the token endpoint, which Marketing Cloud rate limits.

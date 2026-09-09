@@ -19,6 +19,14 @@ import { SalesForceAPIError, SalesForceConfigError, toSafeCause, isSalesForceErr
  * ```
  */
 class AutomationStudio {
+    /**
+     * Upper bound on pages fetched by {@link AutomationStudio.getAll}.
+     *
+     * Pagination stops when the API stops advertising a next link. This cap is the
+     * backstop for a server that always advertises one, which would otherwise loop
+     * until the process exhausts memory.
+     */
+    static MAX_PAGES = 1000;
     /** Timezone ID for America/Toronto (Eastern Time) */
     static TIME_ZONE_AMERICA_TORONTO = 76;
     /** Timezone ID for America/Chicago (Central Time) */
@@ -58,26 +66,6 @@ class AutomationStudio {
             throw new SalesForceAPIError(`Failed to get automation endpoints: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, '/automation/v1/rest', 'GET', { cause: toSafeCause(error) });
         }
     }
-    /**
-     * Retrieves automations in the account
-     *
-     * @param options - Optional pagination parameters
-     * @param options.page - Specific page number to retrieve (1-based)
-     * @param options.pageSize - Number of items per page (default: 500)
-     * @returns A promise that resolves to automations list response or array of all automations
-     * @throws {SalesForceAPIError} If the API request fails
-     *
-     * @example
-     * ```typescript
-     * // Get all automations (automatic pagination)
-     * const allAutomations = await automationStudio.getAll();
-     * console.log(`Found ${allAutomations.length} automations`);
-     *
-     * // Get specific page
-     * const pageData = await automationStudio.getAll({ page: 1, pageSize: 50 });
-     * console.log(`Page 1: ${pageData.items.length} of ${pageData.count} total`);
-     * ```
-     */
     async getAll(options) {
         const { page: requestedPage, pageSize = 500 } = options || {};
         try {
@@ -90,6 +78,11 @@ class AutomationStudio {
             let page = 1;
             let hasMore = true;
             while (hasMore) {
+                // A server that always advertises a next link would otherwise loop
+                // forever, accumulating results until the process runs out of memory.
+                if (page > _a.MAX_PAGES) {
+                    throw new SalesForceAPIError(`Pagination exceeded ${_a.MAX_PAGES} pages; aborting to avoid an unbounded loop`, 500, '/automation/v1/automations', 'GET');
+                }
                 const data = await this.#SF.api(`/automation/v1/automations?$page=${page}&$pageSize=${pageSize}`, 'GET');
                 allAutomations = allAutomations.concat(data.items || []);
                 hasMore = !!data.links?.next;
@@ -307,8 +300,9 @@ class AutomationStudio {
         if (!automationId) {
             throw new SalesForceConfigError('Automation ID is required');
         }
-        // Implementation pending
-        throw new Error('Delete automation not yet implemented');
+        // Implementation pending. Thrown as an SDK error so callers can catch it
+        // alongside every other failure from this class rather than a bare Error.
+        throw new SalesForceConfigError('AutomationStudio.delete() is not implemented; delete the automation in Marketing Cloud or via the SOAP API');
     }
     /**
      * Runs an automation immediately (run once)

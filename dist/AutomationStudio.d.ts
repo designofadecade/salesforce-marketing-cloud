@@ -20,6 +20,14 @@ import type { AutomationResponse, AutomationsListResponse, CreateAutomationOptio
  */
 export default class AutomationStudio {
     #private;
+    /**
+     * Upper bound on pages fetched by {@link AutomationStudio.getAll}.
+     *
+     * Pagination stops when the API stops advertising a next link. This cap is the
+     * backstop for a server that always advertises one, which would otherwise loop
+     * until the process exhausts memory.
+     */
+    static readonly MAX_PAGES = 1000;
     /** Timezone ID for America/Toronto (Eastern Time) */
     static readonly TIME_ZONE_AMERICA_TORONTO = 76;
     /** Timezone ID for America/Chicago (Central Time) */
@@ -60,6 +68,15 @@ export default class AutomationStudio {
      * console.log(`Page 1: ${pageData.items.length} of ${pageData.count} total`);
      * ```
      */
+    getAll(): Promise<AutomationResponse[]>;
+    getAll(options: {
+        page: number;
+        pageSize?: number;
+    }): Promise<AutomationsListResponse>;
+    getAll(options: {
+        page?: undefined;
+        pageSize?: number;
+    }): Promise<AutomationResponse[]>;
     getAll(options?: {
         page?: number;
         pageSize?: number;

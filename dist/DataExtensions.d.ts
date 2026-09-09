@@ -23,6 +23,14 @@ import type { DataExtensionRow, DataExtensionResponse } from './types.js';
 export default class DataExtensions {
     #private;
     /**
+     * Upper bound on pages fetched by {@link DataExtensions.getAllRows}.
+     *
+     * Pagination stops when the API stops advertising a next link. This cap is the
+     * backstop for a server that always advertises one, which would otherwise loop
+     * until the process exhausts memory.
+     */
+    static readonly MAX_PAGES = 1000;
+    /**
      * Creates a new DataExtensions API instance
      *
      * @param salesForceInstance - An authenticated SalesForce client instance

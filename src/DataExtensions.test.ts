@@ -19,6 +19,23 @@ describe('DataExtensions', () => {
         dataExtensions = new DataExtensions(mockSFClient as SalesForceClient);
     });
 
+    describe('getAllRows pagination safety', () => {
+        it('should abort after MAX_PAGES instead of looping forever', async () => {
+            (mockSFClient.api as any).mockResolvedValue({
+                items: [{ keys: { id: '1' }, values: {} }],
+                links: { next: '/next' },
+            });
+
+            const thrown = await dataExtensions.getAllRows('k').catch(e => e);
+
+            expect(thrown).toBeInstanceOf(SalesForceAPIError);
+            expect(thrown.message).toContain('Pagination exceeded');
+            expect((mockSFClient.api as any).mock.calls.length).toBe(
+                DataExtensions.MAX_PAGES
+            );
+        });
+    });
+
     describe('bulkDelete batch size', () => {
         // NaN passes a `< 1` check, then `i += NaN` ends the loop immediately, so
         // the old guard let a NaN batch size delete nothing and report success.

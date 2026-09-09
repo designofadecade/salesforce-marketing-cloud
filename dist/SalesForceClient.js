@@ -152,7 +152,8 @@ export default class SalesForceClient {
      */
     async api(endpoint, method = 'GET', body = null) {
         if (!endpoint) {
-            throw new SalesForceAPIError('Endpoint is required', 400);
+            // A missing endpoint is a caller mistake, not a response from the API.
+            throw new SalesForceConfigError('Endpoint is required');
         }
         if (!this.#authentication || this.#isTokenExpired()) {
             await this.#authenticate();

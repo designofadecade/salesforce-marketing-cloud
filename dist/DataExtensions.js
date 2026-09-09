@@ -20,6 +20,14 @@ import { SalesForceAPIError, SalesForceConfigError, isSalesForceError, toSafeCau
  * ```
  */
 export default class DataExtensions {
+    /**
+     * Upper bound on pages fetched by {@link DataExtensions.getAllRows}.
+     *
+     * Pagination stops when the API stops advertising a next link. This cap is the
+     * backstop for a server that always advertises one, which would otherwise loop
+     * until the process exhausts memory.
+     */
+    static MAX_PAGES = 1000;
     #SF;
     /**
      * Creates a new DataExtensions API instance
@@ -398,6 +406,11 @@ export default class DataExtensions {
         let hasMore = true;
         try {
             while (hasMore) {
+                // A server that always advertises a next link would otherwise loop
+                // forever, accumulating rows until the process runs out of memory.
+                if (page > DataExtensions.MAX_PAGES) {
+                    throw new SalesForceAPIError(`Pagination exceeded ${DataExtensions.MAX_PAGES} pages; aborting to avoid an unbounded loop`, 500, `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`, 'GET');
+                }
                 const data = await this.#SF.api(`/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset?$pageSize=500&$page=${page}`, 'GET');
                 allRows = allRows.concat(data.items || []);
                 hasMore = !!data.links?.next;

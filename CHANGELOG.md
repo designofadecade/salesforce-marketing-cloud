@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-09-09
+
+Production-readiness release: runtime compatibility, pagination safety, API typing and CI gating.
+
+### Fixed
+- **Unbounded pagination could hang the process.** `AutomationStudio.getAll()` and `DataExtensions.getAllRows()` looped for as long as the API advertised a `links.next`, with no ceiling. A server that always advertises one would loop forever, accumulating results until the process ran out of memory. Both now stop after `MAX_PAGES` (1000) and throw a `SalesForceAPIError`.
+- **`SalesForceClient.api()` reported a caller mistake as an API response.** An empty endpoint threw `SalesForceAPIError` with a fabricated `statusCode` of 400; it now throws `SalesForceConfigError`, matching every other argument validation in the SDK.
+- **`AutomationStudio.delete()` threw a bare `Error`**, so it could not be caught alongside other SDK failures. It now throws `SalesForceConfigError` and names the alternative. The method remains unimplemented and deprecated.
+- **Shipped source maps pointed at files that were not published.** `dist/*.js.map` and `dist/*.d.ts.map` reference `../src/*.ts`, but `files` only included `dist`, so consumer debuggers and go-to-definition resolved to nonexistent paths. `src` is now published (tests excluded).
+
+### Changed
+- **Node floor lowered from `>=24.0.0` to `>=20.0.0`.** Nothing in the SDK needs more than Node 18 (`fetch`, `#private` fields, `Error` `cause`, `Intl` `shortOffset`); the previous floor excluded Node 20 and 22 deployments for no benefit. CI now runs the full suite on Node 20, 22 and 24.
+- `AutomationStudio.getAll()` gained overloads. `getAll()` narrows to `AutomationResponse[]` and `getAll({ page })` narrows to `AutomationsListResponse`, instead of both returning a union every caller had to narrow by hand. Runtime behavior is unchanged.
+- CI now gates on the linter instead of running it with `continue-on-error`, and the workflows use `actions/checkout@v5` and `actions/setup-node@v5` (v4 was being force-migrated off Node 20).
+- ESLint no longer reports `no-explicit-any` in test files, where mock casts made it noise. Warnings dropped from 112 to 26, all in `src/`, so the count is now a usable signal.
+
+### Documentation
+- README corrected: `getAll()` was documented as returning `AutomationsListResponse`, which was wrong for the no-argument call. Both forms and the pagination cap are now described.
+- README Node requirement updated to 20+.
+
+### Behavior changes
+- `api('')` throws `SalesForceConfigError` rather than `SalesForceAPIError` (`statusCode` 400).
+- `AutomationStudio.delete()` throws `SalesForceConfigError` rather than `Error`.
+- Automatic pagination past 1000 pages now throws instead of continuing. Collections larger than 500,000 records need explicit paging.
+- The narrowed `getAll()` return types can surface a compile error in defensive code that branched on `Array.isArray(...)` for the no-argument call, since that branch is now statically known.
+
+### Tests
+- 122 → 128 tests, covering both pagination caps, the `getAll` single-page path, `delete()`'s error type and `api('')` validation. Overload narrowing is verified at the type level.
+
 ## [2.2.0] - 2026-09-09
 
 Error handling, resource and typing fixes from the v2.1.1 code review. No signature is removed or narrowed, but error *types* change for some failures — see Behavior changes.

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AutomationStudio from './AutomationStudio.js';
 import type SalesForceClient from './SalesForceClient.js';
+import { SalesForceAPIError, SalesForceConfigError } from './errors.js';
 
 describe('AutomationStudio', () => {
     let automationStudio: AutomationStudio;
@@ -313,6 +314,52 @@ describe('AutomationStudio', () => {
                 '/automation/v1/automations/auto-123/actions/runallonce',
                 'POST'
             );
+        });
+    });
+
+    describe('pagination safety', () => {
+        // Without a cap, a server that always advertises a next link keeps the
+        // loop running until the process runs out of memory.
+        it('should abort after MAX_PAGES instead of looping forever', async () => {
+            (mockSFClient.api as any).mockResolvedValue({
+                items: [{ id: 'a' }],
+                links: { next: '/next' },
+            });
+
+            const thrown = await automationStudio.getAll().catch(e => e);
+
+            expect(thrown).toBeInstanceOf(SalesForceAPIError);
+            expect(thrown.message).toContain('Pagination exceeded');
+            expect((mockSFClient.api as any).mock.calls.length).toBe(
+                AutomationStudio.MAX_PAGES
+            );
+        });
+
+        it('should stop when the API stops advertising a next link', async () => {
+            (mockSFClient.api as any)
+                .mockResolvedValueOnce({ items: [{ id: 'a' }], links: { next: '/n' } })
+                .mockResolvedValueOnce({ items: [{ id: 'b' }], links: {} });
+
+            const all = await automationStudio.getAll();
+
+            expect(all).toEqual([{ id: 'a' }, { id: 'b' }]);
+        });
+
+        it('should return a single page object when page is given', async () => {
+            const page = { items: [{ id: 'a' }], count: 1, links: {} };
+            (mockSFClient.api as any).mockResolvedValueOnce(page);
+
+            const result = await automationStudio.getAll({ page: 1, pageSize: 50 });
+
+            expect(result).toBe(page);
+            expect((mockSFClient.api as any).mock.calls.length).toBe(1);
+        });
+    });
+
+    describe('delete', () => {
+        it('should throw a catchable SDK error rather than a bare Error', async () => {
+            const thrown = await automationStudio.delete('id').catch(e => e);
+            expect(thrown).toBeInstanceOf(SalesForceConfigError);
         });
     });
 
