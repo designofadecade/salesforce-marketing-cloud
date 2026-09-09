@@ -1,6 +1,6 @@
 {
   "name": "@designofadecade/salesforce-marketing-cloud",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Salesforce Marketing Cloud SDK for Node.js",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,7 +21,7 @@
     "build:watch": "tsc --watch",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint src",
     "format": "prettier --write \"src/**/*.ts\""
   },
   "engines": {
@@ -37,18 +37,21 @@
   "author": "Design of a Decade <info@designofadecade.com>",
   "license": "MIT",
   "dependencies": {
-    "soap": "^1.1.5"
+    "soap": "^1.11.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
-    "@vitest/coverage-v8": "^4.1.4",
-    "@vitest/ui": "^4.1.4",
-    "eslint": "^8.57.0",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.13.3",
+    "@typescript-eslint/eslint-plugin": "^8.70.0",
+    "@typescript-eslint/parser": "^8.70.0",
+    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/ui": "^5.0.0",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
     "prettier": "^3.2.5",
-    "typescript": "^5.4.5",
-    "vitest": "^4.1.4"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.0"
   },
   "repository": {
     "type": "git",

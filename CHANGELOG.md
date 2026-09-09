@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-09-09
+
+### Security
+- Resolved all 13 known advisories (8 high, 5 moderate). `npm audit` now reports 0 vulnerabilities.
+- Raised the `soap` floor from `^1.1.5` to `^1.11.0`, pulling in patched transitive dependencies:
+  - `axios` 1.15.2 → 1.20.0 — 18 advisories, including ReDoS, `Proxy-Authorization` credential leaks across redirects, `NO_PROXY` bypasses, and prototype-pollution request tampering
+  - `@xmldom/xmldom` 0.8.13 → 0.8.15 — 10 advisories, including XML/attribute/DocType injection bypassing `requireWellFormed`, and quadratic-time parsing
+- Cleared dev-toolchain advisories in `@vitest/mocker` (path traversal / arbitrary file read), `vite`, `postcss`, `nanoid`, `js-yaml`, `brace-expansion`, and `form-data`. These are dev-only and never shipped, since `files` is limited to `dist`.
+
+### Changed
+- Upgraded the dev toolchain: ESLint 8 → 10, typescript-eslint 7 → 8, TypeScript 5 → 6, Vitest 4 → 5, `@types/node` 20 → 24 (now matching the declared `node >=24` engine).
+- Migrated ESLint to flat config: `eslint.config.js` replaces `.eslintrc.json`. ESLint 8 had reached end of life.
+- `tsconfig.json` now uses `module`/`moduleResolution: NodeNext`, replacing `ES2022`/`node`. The old `node10` resolution is deprecated in TypeScript 6 and stops working in 7. All relative imports already carried explicit `.js` extensions, so this required no source changes.
+- `tsconfig.json` now declares `types: ["node"]` explicitly, as TypeScript 6 no longer auto-includes every `@types/*` package. This also keeps unrelated test-only types out of the build.
+- The `lint` script now targets `src` instead of a shell glob, matching flat-config conventions.
+
+### Fixed
+- Rethrown errors in `AutomationStudio.activate()`, `AutomationStudio.pause()`, and SOAP client creation in `SalesForceClient` now attach the original error via `{ cause }`. Previously the underlying failure was discarded, leaving only a summary message and making SOAP and network faults hard to diagnose.
+
+### Notes
+- No public API changes. This release is drop-in for 2.0.x.
+- TypeScript was held at 6.x rather than 7.x because typescript-eslint 8 (the current release) supports TypeScript `<6.1.0`. TypeScript 7 can be adopted once typescript-eslint ships support.
+
 ## [2.0.0] - 2026-08-19
 
 ### Added

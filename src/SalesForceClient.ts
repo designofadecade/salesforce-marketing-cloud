@@ -259,7 +259,8 @@ export default class SalesForceClient {
             return client;
         } catch (error) {
             throw new Error(
-                `Failed to create SOAP client: ${error instanceof Error ? error.message : 'Unknown error'}`
+                `Failed to create SOAP client: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                { cause: error }
             );
         }
     }

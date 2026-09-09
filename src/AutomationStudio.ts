@@ -311,7 +311,8 @@ export default class AutomationStudio {
             return soapRes[0]?.OverallStatus === 'OK';
         } catch (error) {
             throw new Error(
-                `Failed to activate automation: ${error instanceof Error ? error.message : 'Unknown error'}`
+                `Failed to activate automation: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                { cause: error }
             );
         }
     }
@@ -354,7 +355,8 @@ export default class AutomationStudio {
             return soapRes[0]?.OverallStatus === 'OK';
         } catch (error) {
             throw new Error(
-                `Failed to pause automation: ${error instanceof Error ? error.message : 'Unknown error'}`
+                `Failed to pause automation: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                { cause: error }
             );
         }
     }
