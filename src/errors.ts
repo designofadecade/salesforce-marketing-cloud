@@ -10,9 +10,10 @@ export class SalesForceAPIError extends Error {
         message: string,
         statusCode: number,
         endpoint?: string,
-        method?: string
+        method?: string,
+        options?: ErrorOptions
     ) {
-        super(message);
+        super(message, options);
         this.name = 'SalesForceAPIError';
         this.statusCode = statusCode;
         this.endpoint = endpoint;
@@ -27,8 +28,8 @@ export class SalesForceAPIError extends Error {
 export class SalesForceAuthError extends Error {
     public readonly statusCode: number;
 
-    constructor(message: string, statusCode: number) {
-        super(message);
+    constructor(message: string, statusCode: number, options?: ErrorOptions) {
+        super(message, options);
         this.name = 'SalesForceAuthError';
         this.statusCode = statusCode;
         Error.captureStackTrace(this, this.constructor);
@@ -39,8 +40,8 @@ export class SalesForceAuthError extends Error {
  * Custom error class for configuration errors
  */
 export class SalesForceConfigError extends Error {
-    constructor(message: string) {
-        super(message);
+    constructor(message: string, options?: ErrorOptions) {
+        super(message, options);
         this.name = 'SalesForceConfigError';
         Error.captureStackTrace(this, this.constructor);
     }
@@ -76,4 +77,25 @@ export function toSafeCause(error: unknown): {
         message: error.message,
         ...(typeof code === 'string' ? { code } : {}),
     };
+}
+
+/**
+ * Narrows an unknown caught value to one of this SDK's error classes.
+ *
+ * Wrapper methods use this to re-throw SDK errors unchanged instead of
+ * flattening them into a generic `SalesForceAPIError`, which would discard the
+ * real status code and make an authentication failure indistinguishable from a
+ * server error.
+ *
+ * @param error - The caught error, of unknown shape
+ * @returns True if the value is a SalesForce SDK error
+ */
+export function isSalesForceError(
+    error: unknown
+): error is SalesForceAPIError | SalesForceAuthError | SalesForceConfigError {
+    return (
+        error instanceof SalesForceAPIError ||
+        error instanceof SalesForceAuthError ||
+        error instanceof SalesForceConfigError
+    );
 }

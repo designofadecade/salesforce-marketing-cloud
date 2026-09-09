@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-09-09
+
+Error handling, resource and typing fixes from the v2.1.1 code review. No signature is removed or narrowed, but error *types* change for some failures — see Behavior changes.
+
+### Fixed
+- **Authentication failures are no longer flattened into fabricated 500s.** Every wrapper method caught only `SalesForceAPIError` and re-wrapped anything else, so a 401 from the token endpoint surfaced through `DataExtensions.get()` as `SalesForceAPIError` with `statusCode: 500` and no `cause`. `instanceof SalesForceAuthError` was therefore `false` outside a direct `client.api()` call, and retry-on-5xx logic would retry a credentials failure indefinitely. All 17 wrapper catch sites now re-throw SDK errors unchanged via a new internal `isSalesForceError` guard.
+- **Concurrent calls no longer trigger a token request each.** `#authenticate()` had no in-flight guard, so N parallel calls on a cold or newly expired client each POSTed the `client_secret` to the rate-limited token endpoint. Callers now share a single in-flight request; a failed attempt is not cached, so the next call retries.
+- **`clearRecords()` no longer silently skips rows with falsy primary keys.** A truthiness check dropped legitimate keys such as `0` or `''`, leaving those rows in the data extension while the method returned `void` and reported success. Only genuinely absent keys are skipped now.
+- **`bulkDelete()` no longer silently deletes nothing for a non-integer batch size.** `NaN` passed the old `batchSize < 1` check, then `i += NaN` ended the batching loop immediately, so the call completed successfully having deleted no rows. A realistic trigger was `parseInt(process.env.BATCH_SIZE)` on an unset variable. Batch size must now be a positive integer.
+
+### Added
+- `cause` is now attached to every wrapped error, sanitized through `toSafeCause` so transport errors cannot carry an access token into logs. `SalesForceAPIError`, `SalesForceAuthError` and `SalesForceConfigError` all accept an `ErrorOptions` argument.
+- Generic return types on `insert`, `update`, `insertAsync`, `updateAsync`, `delete`, `bulkDelete`, `run` and both `endpoints()` methods — e.g. `insert<T>(...): Promise<T>`. The default remains `any`, so existing callers are unaffected.
+- `bulkDelete()` failures now report progress: `"Failed to bulk delete data on batch 2 of 3 (1 of 3 batches completed)"`. Batches already sent cannot be rolled back, so knowing where it stopped matters.
+
+### Behavior changes
+- Authentication failures raised through wrapper methods are now `SalesForceAuthError` (`statusCode` 401) rather than `SalesForceAPIError` (`statusCode` 500). This restores the behavior the README has always documented, but code catching `SalesForceAPIError` to handle auth failures will no longer match them.
+- `bulkDelete()` rejects `NaN`, `Infinity` and fractional batch sizes that were previously accepted. `Infinity` had behaved as a single batch.
+- Two validation and failure messages changed wording; string-matching on them will need updating.
+
+### Tests
+- 109 → 122 tests. Added coverage for auth and config error passthrough, sanitized `cause` content, concurrent token deduplication and retry-after-failure, batch-size validation, batch coverage and mid-batch failure reporting, and falsy primary keys in `clearRecords()`. All new tests were confirmed to fail against the unfixed code.
+
 ## [2.1.1] - 2026-09-09
 
 Security patch. No public API changes; drop-in for 2.1.0.

@@ -4,6 +4,7 @@ import {
     SalesForceAuthError,
     SalesForceConfigError,
     toSafeCause,
+    isSalesForceError,
 } from './errors.js';
 import type {
     SalesForceClientConfig,
@@ -44,6 +45,7 @@ export default class SalesForceClient {
     #scope: string;
     #authentication?: AuthenticationResponse;
     #tokenExpiresAt?: number;
+    #authPromise?: Promise<void>;
 
     /**
      * Creates a new Salesforce Marketing Cloud client instance
@@ -109,6 +111,23 @@ export default class SalesForceClient {
      * @throws {SalesForceAuthError} If authentication fails
      */
     async #authenticate(): Promise<void> {
+        // Concurrent callers share a single in-flight request. Without this, N
+        // parallel calls on a cold client each POST the client_secret to the
+        // token endpoint, which Marketing Cloud rate limits.
+        this.#authPromise ??= this.#requestToken().finally(() => {
+            this.#authPromise = undefined;
+        });
+
+        return this.#authPromise;
+    }
+
+    /**
+     * Performs the actual OAuth token request.
+     *
+     * @private
+     * @throws {SalesForceAuthError} If authentication fails
+     */
+    async #requestToken(): Promise<void> {
         const authUrl = `https://${this.#clientDomain}.auth.marketingcloudapis.com/v2/token`;
 
         try {
@@ -144,7 +163,8 @@ export default class SalesForceClient {
             }
             throw new SalesForceAuthError(
                 `Authentication request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                500
+                500,
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -207,14 +227,15 @@ export default class SalesForceClient {
             const data = await res.json();
             return data as T;
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `API request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 endpoint,
-                method
+                method,
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -231,8 +252,8 @@ export default class SalesForceClient {
      * console.log(endpoints);
      * ```
      */
-    async endpoints(): Promise<any> {
-        return await this.api(`/platform/v1/endpoints`, 'GET');
+    async endpoints<T = any>(): Promise<T> {
+        return await this.api<T>(`/platform/v1/endpoints`, 'GET');
     }
 
     /**

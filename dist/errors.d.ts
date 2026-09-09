@@ -5,20 +5,20 @@ export declare class SalesForceAPIError extends Error {
     readonly statusCode: number;
     readonly endpoint?: string;
     readonly method?: string;
-    constructor(message: string, statusCode: number, endpoint?: string, method?: string);
+    constructor(message: string, statusCode: number, endpoint?: string, method?: string, options?: ErrorOptions);
 }
 /**
  * Custom error class for authentication errors
  */
 export declare class SalesForceAuthError extends Error {
     readonly statusCode: number;
-    constructor(message: string, statusCode: number);
+    constructor(message: string, statusCode: number, options?: ErrorOptions);
 }
 /**
  * Custom error class for configuration errors
  */
 export declare class SalesForceConfigError extends Error {
-    constructor(message: string);
+    constructor(message: string, options?: ErrorOptions);
 }
 /**
  * Extracts a minimal, non-sensitive summary of a caught error for use as an
@@ -39,4 +39,16 @@ export declare function toSafeCause(error: unknown): {
     code?: string;
     message?: string;
 };
+/**
+ * Narrows an unknown caught value to one of this SDK's error classes.
+ *
+ * Wrapper methods use this to re-throw SDK errors unchanged instead of
+ * flattening them into a generic `SalesForceAPIError`, which would discard the
+ * real status code and make an authentication failure indistinguishable from a
+ * server error.
+ *
+ * @param error - The caught error, of unknown shape
+ * @returns True if the value is a SalesForce SDK error
+ */
+export declare function isSalesForceError(error: unknown): error is SalesForceAPIError | SalesForceAuthError | SalesForceConfigError;
 //# sourceMappingURL=errors.d.ts.map

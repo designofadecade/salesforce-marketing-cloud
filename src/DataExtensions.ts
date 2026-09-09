@@ -1,5 +1,10 @@
 import type SalesForceClient from './SalesForceClient.js';
-import { SalesForceAPIError, SalesForceConfigError } from './errors.js';
+import {
+    SalesForceAPIError,
+    SalesForceConfigError,
+    isSalesForceError,
+    toSafeCause,
+} from './errors.js';
 import type { DataExtensionRow, DataExtensionResponse } from './types.js';
 
 /**
@@ -62,14 +67,15 @@ export default class DataExtensions {
                 'GET'
             );
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to get data extension: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`,
-                'GET'
+                'GET',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -134,14 +140,15 @@ export default class DataExtensions {
 
             return resData?.items?.[0]?.values;
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to get data: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`,
-                'GET'
+                'GET',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -163,7 +170,10 @@ export default class DataExtensions {
      * ]);
      * ```
      */
-    async insert(externalKey: string, items: DataExtensionRow[]): Promise<any> {
+    async insert<T = any>(
+        externalKey: string,
+        items: DataExtensionRow[]
+    ): Promise<T> {
         if (!externalKey) {
             throw new SalesForceConfigError('Data extension external key is required');
         }
@@ -179,14 +189,15 @@ export default class DataExtensions {
                 items
             );
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to insert data: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset`,
-                'POST'
+                'POST',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -212,12 +223,12 @@ export default class DataExtensions {
      * );
      * ```
      */
-    async update(
+    async update<T = any>(
         externalKey: string,
         primaryKey: string,
         primaryKeyValue: string,
         values: Record<string, any>
-    ): Promise<any> {
+    ): Promise<T> {
         if (!externalKey) {
             throw new SalesForceConfigError('Data extension external key is required');
         }
@@ -248,14 +259,15 @@ export default class DataExtensions {
                 ]
             );
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to update data: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset`,
-                'POST'
+                'POST',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -277,7 +289,10 @@ export default class DataExtensions {
      * console.log(`Request ID: ${result.requestId}`);
      * ```
      */
-    async insertAsync(externalKey: string, items: Record<string, any>[]): Promise<any> {
+    async insertAsync<T = any>(
+        externalKey: string,
+        items: Record<string, any>[]
+    ): Promise<T> {
         if (!externalKey) {
             throw new SalesForceConfigError('Data extension external key is required');
         }
@@ -295,14 +310,15 @@ export default class DataExtensions {
                 }
             );
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to insert data asynchronously: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 `/data/v1/async/dataextensions/key:${encodeURIComponent(externalKey)}/rows`,
-                'POST'
+                'POST',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -323,7 +339,10 @@ export default class DataExtensions {
      * ]);
      * ```
      */
-    async updateAsync(externalKey: string, items: Record<string, any>[]): Promise<any> {
+    async updateAsync<T = any>(
+        externalKey: string,
+        items: Record<string, any>[]
+    ): Promise<T> {
         if (!externalKey) {
             throw new SalesForceConfigError('Data extension external key is required');
         }
@@ -341,14 +360,15 @@ export default class DataExtensions {
                 }
             );
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to update data asynchronously: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 `/data/v1/async/dataextensions/key:${encodeURIComponent(externalKey)}/rows`,
-                'PUT'
+                'PUT',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -368,11 +388,11 @@ export default class DataExtensions {
      * await dataExtensions.delete('customer-de', 'email', 'customer@example.com');
      * ```
      */
-    async delete(
+    async delete<T = any>(
         externalKey: string,
         primaryKey: string,
         primaryKeyValue: string
-    ): Promise<any> {
+    ): Promise<T> {
         if (!externalKey) {
             throw new SalesForceConfigError('Data extension external key is required');
         }
@@ -398,14 +418,15 @@ export default class DataExtensions {
                 ]
             );
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to delete data: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`,
-                'POST'
+                'POST',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -442,11 +463,11 @@ export default class DataExtensions {
      * await dataExtensions.bulkDelete('customer-de', largeArray, 500);
      * ```
      */
-    async bulkDelete(
+    async bulkDelete<T = any>(
         externalKey: string,
         items: Array<{ keys: Record<string, any> }>,
         batchSize: number = 1000
-    ): Promise<any[]> {
+    ): Promise<T[]> {
         if (!externalKey) {
             throw new SalesForceConfigError('Data extension external key is required');
         }
@@ -455,8 +476,13 @@ export default class DataExtensions {
             throw new SalesForceConfigError('Items array is required and must not be empty');
         }
 
-        if (batchSize < 1) {
-            throw new SalesForceConfigError('Batch size must be at least 1');
+        // A non-integer batch size silently breaks the loop below: NaN passes a
+        // `< 1` check, then `i += NaN` ends iteration immediately and nothing is
+        // deleted while the call still reports success.
+        if (!Number.isInteger(batchSize) || batchSize < 1) {
+            throw new SalesForceConfigError(
+                'Batch size must be a positive integer'
+            );
         }
 
         // Split items into batches
@@ -465,25 +491,28 @@ export default class DataExtensions {
             batches.push(items.slice(i, i + batchSize));
         }
 
-        // Process each batch sequentially
-        const results: any[] = [];
-        for (const batch of batches) {
+        // Process each batch sequentially. Batches already sent cannot be rolled
+        // back, so failures report how far the deletion got.
+        const results: T[] = [];
+        for (const [index, batch] of batches.entries()) {
+            const progress = `batch ${index + 1} of ${batches.length}`;
             try {
-                const result = await this.#SF.api(
+                const result = await this.#SF.api<T>(
                     `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`,
                     'POST',
                     batch
                 );
                 results.push(result);
             } catch (error) {
-                if (error instanceof SalesForceAPIError) {
+                if (isSalesForceError(error)) {
                     throw error;
                 }
                 throw new SalesForceAPIError(
-                    `Failed to bulk delete data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                    `Failed to bulk delete data on ${progress} (${index} of ${batches.length} batches completed): ${error instanceof Error ? error.message : 'Unknown error'}`,
                     500,
                     `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`,
-                    'POST'
+                    'POST',
+                    { cause: toSafeCause(error) }
                 );
             }
         }
@@ -528,14 +557,15 @@ export default class DataExtensions {
 
             return allRows;
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to get all rows: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`,
-                'GET'
+                'GET',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -571,7 +601,10 @@ export default class DataExtensions {
         const itemsToDelete = allRows
             .map(row => {
                 const primaryKeyValue = row.keys[primaryKey];
-                if (primaryKeyValue) {
+                // Only a genuinely absent key is skipped. A falsy check would
+                // silently drop legitimate keys such as 0 or an empty string,
+                // leaving those rows behind while reporting success.
+                if (primaryKeyValue !== undefined && primaryKeyValue !== null) {
                     return { keys: { [primaryKey]: String(primaryKeyValue) } };
                 }
                 return null;

@@ -1,5 +1,5 @@
 import Soap from 'soap';
-import { SalesForceAPIError, SalesForceAuthError, SalesForceConfigError, toSafeCause, } from './errors.js';
+import { SalesForceAPIError, SalesForceAuthError, SalesForceConfigError, toSafeCause, isSalesForceError, } from './errors.js';
 /**
  * Salesforce Marketing Cloud API Client
  *
@@ -33,6 +33,7 @@ export default class SalesForceClient {
     #scope;
     #authentication;
     #tokenExpiresAt;
+    #authPromise;
     /**
      * Creates a new Salesforce Marketing Cloud client instance
      *
@@ -87,6 +88,21 @@ export default class SalesForceClient {
      * @throws {SalesForceAuthError} If authentication fails
      */
     async #authenticate() {
+        // Concurrent callers share a single in-flight request. Without this, N
+        // parallel calls on a cold client each POST the client_secret to the
+        // token endpoint, which Marketing Cloud rate limits.
+        this.#authPromise ??= this.#requestToken().finally(() => {
+            this.#authPromise = undefined;
+        });
+        return this.#authPromise;
+    }
+    /**
+     * Performs the actual OAuth token request.
+     *
+     * @private
+     * @throws {SalesForceAuthError} If authentication fails
+     */
+    async #requestToken() {
         const authUrl = `https://${this.#clientDomain}.auth.marketingcloudapis.com/v2/token`;
         try {
             const res = await fetch(authUrl, {
@@ -115,7 +131,7 @@ export default class SalesForceClient {
             if (error instanceof SalesForceAuthError) {
                 throw error;
             }
-            throw new SalesForceAuthError(`Authentication request failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 500);
+            throw new SalesForceAuthError(`Authentication request failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, { cause: toSafeCause(error) });
         }
     }
     /**
@@ -162,10 +178,10 @@ export default class SalesForceClient {
             return data;
         }
         catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
-            throw new SalesForceAPIError(`API request failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, endpoint, method);
+            throw new SalesForceAPIError(`API request failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, endpoint, method, { cause: toSafeCause(error) });
         }
     }
     /**

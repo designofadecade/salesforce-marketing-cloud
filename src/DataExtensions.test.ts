@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import DataExtensions from './DataExtensions.js';
 import type SalesForceClient from './SalesForceClient.js';
-import { SalesForceConfigError } from './errors.js';
+import {
+    SalesForceAPIError,
+    SalesForceAuthError,
+    SalesForceConfigError,
+} from './errors.js';
 
 describe('DataExtensions', () => {
     let dataExtensions: DataExtensions;
@@ -13,6 +17,124 @@ describe('DataExtensions', () => {
         };
 
         dataExtensions = new DataExtensions(mockSFClient as SalesForceClient);
+    });
+
+    describe('bulkDelete batch size', () => {
+        // NaN passes a `< 1` check, then `i += NaN` ends the loop immediately, so
+        // the old guard let a NaN batch size delete nothing and report success.
+        it.each([NaN, 1.5, Infinity, 0, -1])(
+            'should reject non-positive-integer batch size %p',
+            async size => {
+                await expect(
+                    dataExtensions.bulkDelete('k', [{ keys: { id: '1' } }], size)
+                ).rejects.toThrow(SalesForceConfigError);
+                expect(mockSFClient.api).not.toHaveBeenCalled();
+            }
+        );
+
+        it('should delete every item when batching', async () => {
+            (mockSFClient.api as any).mockResolvedValue({ ok: true });
+            const items = Array.from({ length: 2500 }, (_, i) => ({
+                keys: { id: String(i) },
+            }));
+
+            const results = await dataExtensions.bulkDelete('k', items, 1000);
+
+            expect(results).toHaveLength(3);
+            const sent = (mockSFClient.api as any).mock.calls.reduce(
+                (n: number, call: any[]) => n + call[2].length,
+                0
+            );
+            expect(sent).toBe(2500);
+        });
+
+        it('should report progress when a middle batch fails', async () => {
+            (mockSFClient.api as any)
+                .mockResolvedValueOnce({ ok: true })
+                .mockRejectedValueOnce(new Error('boom'));
+            const items = Array.from({ length: 3 }, (_, i) => ({
+                keys: { id: String(i) },
+            }));
+
+            const thrown = await dataExtensions
+                .bulkDelete('k', items, 1)
+                .catch(e => e);
+
+            expect(thrown).toBeInstanceOf(SalesForceAPIError);
+            expect(thrown.message).toContain('batch 2 of 3');
+            expect(thrown.message).toContain('1 of 3 batches completed');
+        });
+    });
+
+    describe('clearRecords', () => {
+        // A falsy check silently dropped legitimate keys such as 0, leaving those
+        // rows in the data extension while reporting success.
+        it('should delete rows whose primary key is falsy', async () => {
+            (mockSFClient.api as any)
+                .mockResolvedValueOnce({
+                    items: [
+                        { keys: { id: 1 } },
+                        { keys: { id: 0 } },
+                        { keys: { id: '' } },
+                        { keys: { id: 'abc' } },
+                        { keys: {} },
+                    ],
+                    links: {},
+                })
+                .mockResolvedValue({ ok: true });
+
+            await dataExtensions.clearRecords('k', 'id');
+
+            const deleteCall = (mockSFClient.api as any).mock.calls.find(
+                (c: any[]) => String(c[0]).includes('rowset/delete')
+            );
+            const sent = deleteCall[2].map((i: any) => i.keys.id);
+
+            // The row with no `id` key at all is correctly skipped; 0 and '' are not.
+            expect(sent).toEqual(['1', '0', '', 'abc']);
+        });
+    });
+
+    describe('error propagation', () => {
+        // A SalesForceAuthError must not be flattened into a generic 500: doing so
+        // hides the real 401 and makes retry-on-5xx logic retry bad credentials.
+        it('should re-throw SalesForceAuthError unchanged', async () => {
+            const authError = new SalesForceAuthError('Failed to authenticate: 401', 401);
+            (mockSFClient.api as any).mockRejectedValueOnce(authError);
+
+            const thrown = await dataExtensions.get('test-key').catch(e => e);
+
+            expect(thrown).toBe(authError);
+            expect(thrown).toBeInstanceOf(SalesForceAuthError);
+            expect(thrown.statusCode).toBe(401);
+        });
+
+        it('should re-throw SalesForceConfigError unchanged', async () => {
+            const cfgError = new SalesForceConfigError('bad config');
+            (mockSFClient.api as any).mockRejectedValueOnce(cfgError);
+
+            await expect(dataExtensions.get('test-key')).rejects.toBe(cfgError);
+        });
+
+        it('should wrap unknown errors with a sanitized cause', async () => {
+            const TOKEN = 'ZZ-TOKEN-ZZ';
+            const transport = Object.assign(new Error('socket hang up'), {
+                name: 'AxiosError',
+                code: 'ECONNRESET',
+                config: { data: `<fueloauth>${TOKEN}</fueloauth>` },
+            });
+            (mockSFClient.api as any).mockRejectedValueOnce(transport);
+
+            const thrown = await dataExtensions.get('test-key').catch(e => e);
+
+            expect(thrown).toBeInstanceOf(SalesForceAPIError);
+            expect(thrown.cause).toEqual({
+                name: 'AxiosError',
+                message: 'socket hang up',
+                code: 'ECONNRESET',
+            });
+            expect(JSON.stringify(thrown.cause)).not.toContain(TOKEN);
+        });
     });
 
     describe('constructor', () => {
@@ -401,7 +523,7 @@ describe('DataExtensions', () => {
             const items = [{ keys: { id: '123' } }];
 
             await expect(dataExtensions.bulkDelete('test-key', items, 0)).rejects.toThrow(
-                'Batch size must be at least 1'
+                'Batch size must be a positive integer'
             );
         });
 
@@ -413,7 +535,7 @@ describe('DataExtensions', () => {
             );
 
             await expect(dataExtensions.bulkDelete('test-key', items)).rejects.toThrow(
-                'Failed to bulk delete data: Network error'
+                /Failed to bulk delete data on batch 1 of 1 \(0 of 1 batches completed\): Network error/
             );
         });
     });

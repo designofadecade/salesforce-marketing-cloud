@@ -1,5 +1,5 @@
 var _a;
-import { SalesForceAPIError, SalesForceConfigError, toSafeCause, } from './errors.js';
+import { SalesForceAPIError, SalesForceConfigError, toSafeCause, isSalesForceError, } from './errors.js';
 /**
  * Automation Studio API client for Salesforce Marketing Cloud
  *
@@ -52,10 +52,10 @@ class AutomationStudio {
             return await this.#SF.api(`/automation/v1/rest`, 'GET');
         }
         catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to get automation endpoints: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, '/automation/v1/rest', 'GET');
+            throw new SalesForceAPIError(`Failed to get automation endpoints: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, '/automation/v1/rest', 'GET', { cause: toSafeCause(error) });
         }
     }
     /**
@@ -98,10 +98,10 @@ class AutomationStudio {
             return allAutomations;
         }
         catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to get automations: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, '/automation/v1/automations', 'GET');
+            throw new SalesForceAPIError(`Failed to get automations: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, '/automation/v1/automations', 'GET', { cause: toSafeCause(error) });
         }
     }
     /**
@@ -126,10 +126,10 @@ class AutomationStudio {
             return await this.#SF.api(`/automation/v1/automations/${encodeURIComponent(externalKey)}`, 'GET');
         }
         catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to get automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${encodeURIComponent(externalKey)}`, 'GET');
+            throw new SalesForceAPIError(`Failed to get automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${encodeURIComponent(externalKey)}`, 'GET', { cause: toSafeCause(error) });
         }
     }
     /**
@@ -182,10 +182,10 @@ class AutomationStudio {
             });
         }
         catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to create automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, '/automation/v1/automations', 'POST');
+            throw new SalesForceAPIError(`Failed to create automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, '/automation/v1/automations', 'POST', { cause: toSafeCause(error) });
         }
     }
     /**
@@ -332,10 +332,10 @@ class AutomationStudio {
             return await this.#SF.api(`/automation/v1/automations/${encodeURIComponent(automationId)}/actions/runallonce`, 'POST');
         }
         catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to run automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${encodeURIComponent(automationId)}/actions/runallonce`, 'POST');
+            throw new SalesForceAPIError(`Failed to run automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${encodeURIComponent(automationId)}/actions/runallonce`, 'POST', { cause: toSafeCause(error) });
         }
     }
     /**

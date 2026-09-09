@@ -62,7 +62,7 @@ export default class SalesForceClient {
      * console.log(endpoints);
      * ```
      */
-    endpoints(): Promise<any>;
+    endpoints<T = any>(): Promise<T>;
     /**
      * Creates and configures a SOAP client for interacting with the Marketing Cloud SOAP API
      *

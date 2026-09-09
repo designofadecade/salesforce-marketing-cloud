@@ -3,6 +3,7 @@ import {
     SalesForceAPIError,
     SalesForceConfigError,
     toSafeCause,
+    isSalesForceError,
 } from './errors.js';
 import type {
     AutomationResponse,
@@ -63,18 +64,19 @@ export default class AutomationStudio {
      * @returns A promise that resolves to the endpoints configuration
      * @throws {SalesForceAPIError} If the API request fails
      */
-    async endpoints(): Promise<any> {
+    async endpoints<T = any>(): Promise<T> {
         try {
             return await this.#SF.api(`/automation/v1/rest`, 'GET');
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to get automation endpoints: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 '/automation/v1/rest',
-                'GET'
+                'GET',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -129,14 +131,15 @@ export default class AutomationStudio {
 
             return allAutomations;
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to get automations: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 '/automation/v1/automations',
-                'GET'
+                'GET',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -166,14 +169,15 @@ export default class AutomationStudio {
                 'GET'
             );
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to get automation: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 `/automation/v1/automations/${encodeURIComponent(externalKey)}`,
-                'GET'
+                'GET',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -232,14 +236,15 @@ export default class AutomationStudio {
                 }
             );
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to create automation: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 '/automation/v1/automations',
-                'POST'
+                'POST',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -399,7 +404,7 @@ export default class AutomationStudio {
      * console.log(`Automation started at ${result.executedDate}`);
      * ```
      */
-    async run(automationId: string): Promise<any> {
+    async run<T = any>(automationId: string): Promise<T> {
         if (!automationId) {
             throw new SalesForceConfigError('Automation ID is required');
         }
@@ -410,14 +415,15 @@ export default class AutomationStudio {
                 'POST'
             );
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to run automation: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 `/automation/v1/automations/${encodeURIComponent(automationId)}/actions/runallonce`,
-                'POST'
+                'POST',
+                { cause: toSafeCause(error) }
             );
         }
     }

@@ -5,8 +5,8 @@ export class SalesForceAPIError extends Error {
     statusCode;
     endpoint;
     method;
-    constructor(message, statusCode, endpoint, method) {
-        super(message);
+    constructor(message, statusCode, endpoint, method, options) {
+        super(message, options);
         this.name = 'SalesForceAPIError';
         this.statusCode = statusCode;
         this.endpoint = endpoint;
@@ -19,8 +19,8 @@ export class SalesForceAPIError extends Error {
  */
 export class SalesForceAuthError extends Error {
     statusCode;
-    constructor(message, statusCode) {
-        super(message);
+    constructor(message, statusCode, options) {
+        super(message, options);
         this.name = 'SalesForceAuthError';
         this.statusCode = statusCode;
         Error.captureStackTrace(this, this.constructor);
@@ -30,8 +30,8 @@ export class SalesForceAuthError extends Error {
  * Custom error class for configuration errors
  */
 export class SalesForceConfigError extends Error {
-    constructor(message) {
-        super(message);
+    constructor(message, options) {
+        super(message, options);
         this.name = 'SalesForceConfigError';
         Error.captureStackTrace(this, this.constructor);
     }
@@ -60,5 +60,21 @@ export function toSafeCause(error) {
         message: error.message,
         ...(typeof code === 'string' ? { code } : {}),
     };
+}
+/**
+ * Narrows an unknown caught value to one of this SDK's error classes.
+ *
+ * Wrapper methods use this to re-throw SDK errors unchanged instead of
+ * flattening them into a generic `SalesForceAPIError`, which would discard the
+ * real status code and make an authentication failure indistinguishable from a
+ * server error.
+ *
+ * @param error - The caught error, of unknown shape
+ * @returns True if the value is a SalesForce SDK error
+ */
+export function isSalesForceError(error) {
+    return (error instanceof SalesForceAPIError ||
+        error instanceof SalesForceAuthError ||
+        error instanceof SalesForceConfigError);
 }
 //# sourceMappingURL=errors.js.map

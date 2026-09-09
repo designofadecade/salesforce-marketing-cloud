@@ -39,7 +39,7 @@ export default class AutomationStudio {
      * @returns A promise that resolves to the endpoints configuration
      * @throws {SalesForceAPIError} If the API request fails
      */
-    endpoints(): Promise<any>;
+    endpoints<T = any>(): Promise<T>;
     /**
      * Retrieves automations in the account
      *
@@ -166,6 +166,6 @@ export default class AutomationStudio {
      * console.log(`Automation started at ${result.executedDate}`);
      * ```
      */
-    run(automationId: string): Promise<any>;
+    run<T = any>(automationId: string): Promise<T>;
 }
 //# sourceMappingURL=AutomationStudio.d.ts.map

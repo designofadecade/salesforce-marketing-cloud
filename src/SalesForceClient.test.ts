@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import SalesForceClient from './SalesForceClient.js';
-import { SalesForceConfigError } from './errors.js';
+import { SalesForceAuthError, SalesForceConfigError } from './errors.js';
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -102,6 +102,67 @@ describe('SalesForceClient', () => {
             expect(JSON.stringify(client)).toBe('{}');
             expect(Reflect.ownKeys(client)).toEqual([]);
             expect(JSON.stringify(client)).not.toContain('test-client-secret');
+        });
+    });
+
+    describe('concurrent authentication', () => {
+        // Without an in-flight guard each parallel caller POSTs the client_secret
+        // to the token endpoint, which Marketing Cloud rate limits.
+        it('should issue a single token request for concurrent calls', async () => {
+            let tokenRequests = 0;
+            (global.fetch as any).mockImplementation(async (url: string) => {
+                if (String(url).includes('/v2/token')) {
+                    tokenRequests++;
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            access_token: 't',
+                            expires_in: 1200,
+                            rest_instance_url: 'https://r.example',
+                        }),
+                    };
+                }
+                return { ok: true, status: 200, json: async () => ({ ok: true }) };
+            });
+
+            await Promise.all([
+                client.api('/a'),
+                client.api('/b'),
+                client.api('/c'),
+                client.api('/d'),
+                client.api('/e'),
+            ]);
+
+            expect(tokenRequests).toBe(1);
+        });
+
+        it('should retry authentication after a failure', async () => {
+            let tokenRequests = 0;
+            (global.fetch as any).mockImplementation(async (url: string) => {
+                if (String(url).includes('/v2/token')) {
+                    tokenRequests++;
+                    if (tokenRequests === 1) {
+                        return { ok: false, status: 401, text: async () => 'nope' };
+                    }
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            access_token: 't',
+                            expires_in: 1200,
+                            rest_instance_url: 'https://r.example',
+                        }),
+                    };
+                }
+                return { ok: true, status: 200, json: async () => ({ ok: true }) };
+            });
+
+            await expect(client.api('/a')).rejects.toThrow(SalesForceAuthError);
+            // The failed promise must not be cached, or the client would be
+            // permanently stuck on the first failure.
+            await expect(client.api('/b')).resolves.toEqual({ ok: true });
+            expect(tokenRequests).toBe(2);
         });
     });
 

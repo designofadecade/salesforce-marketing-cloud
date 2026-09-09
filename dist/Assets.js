@@ -1,4 +1,4 @@
-import { SalesForceAPIError, SalesForceConfigError } from './errors.js';
+import { SalesForceAPIError, SalesForceConfigError, isSalesForceError, toSafeCause, } from './errors.js';
 /**
  * Assets API client for Salesforce Marketing Cloud
  *
@@ -48,10 +48,10 @@ export default class Assets {
             return await this.#SF.api(`/asset/v1/content/assets?$filter=assetType.id=205`, 'GET');
         }
         catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to list assets: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, '/asset/v1/content/assets', 'GET');
+            throw new SalesForceAPIError(`Failed to list assets: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, '/asset/v1/content/assets', 'GET', { cause: toSafeCause(error) });
         }
     }
     /**
@@ -82,10 +82,10 @@ export default class Assets {
             return await this.#SF.api(`/asset/v1/content/assets/${encodeURIComponent(id)}`, 'PATCH', data);
         }
         catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to update asset: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/asset/v1/content/assets/${encodeURIComponent(id)}`, 'PATCH');
+            throw new SalesForceAPIError(`Failed to update asset: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/asset/v1/content/assets/${encodeURIComponent(id)}`, 'PATCH', { cause: toSafeCause(error) });
         }
     }
 }

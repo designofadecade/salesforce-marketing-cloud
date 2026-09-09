@@ -1,5 +1,10 @@
 import type SalesForceClient from './SalesForceClient.js';
-import { SalesForceAPIError, SalesForceConfigError } from './errors.js';
+import {
+    SalesForceAPIError,
+    SalesForceConfigError,
+    isSalesForceError,
+    toSafeCause,
+} from './errors.js';
 import type { AssetResponse, AssetsListResponse } from './types.js';
 
 /**
@@ -55,14 +60,15 @@ export default class Assets {
                 'GET'
             );
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to list assets: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 '/asset/v1/content/assets',
-                'GET'
+                'GET',
+                { cause: toSafeCause(error) }
             );
         }
     }
@@ -100,14 +106,15 @@ export default class Assets {
                 data
             );
         } catch (error) {
-            if (error instanceof SalesForceAPIError) {
+            if (isSalesForceError(error)) {
                 throw error;
             }
             throw new SalesForceAPIError(
                 `Failed to update asset: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
                 `/asset/v1/content/assets/${encodeURIComponent(id)}`,
-                'PATCH'
+                'PATCH',
+                { cause: toSafeCause(error) }
             );
         }
     }

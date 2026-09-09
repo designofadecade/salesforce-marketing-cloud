@@ -81,7 +81,7 @@ export default class DataExtensions {
      * ]);
      * ```
      */
-    insert(externalKey: string, items: DataExtensionRow[]): Promise<any>;
+    insert<T = any>(externalKey: string, items: DataExtensionRow[]): Promise<T>;
     /**
      * Updates a record in a data extension
      *
@@ -103,7 +103,7 @@ export default class DataExtensions {
      * );
      * ```
      */
-    update(externalKey: string, primaryKey: string, primaryKeyValue: string, values: Record<string, any>): Promise<any>;
+    update<T = any>(externalKey: string, primaryKey: string, primaryKeyValue: string, values: Record<string, any>): Promise<T>;
     /**
      * Inserts records asynchronously into a data extension
      *
@@ -121,7 +121,7 @@ export default class DataExtensions {
      * console.log(`Request ID: ${result.requestId}`);
      * ```
      */
-    insertAsync(externalKey: string, items: Record<string, any>[]): Promise<any>;
+    insertAsync<T = any>(externalKey: string, items: Record<string, any>[]): Promise<T>;
     /**
      * Updates records asynchronously in a data extension
      *
@@ -138,7 +138,7 @@ export default class DataExtensions {
      * ]);
      * ```
      */
-    updateAsync(externalKey: string, items: Record<string, any>[]): Promise<any>;
+    updateAsync<T = any>(externalKey: string, items: Record<string, any>[]): Promise<T>;
     /**
      * Deletes a record from a data extension
      *
@@ -154,7 +154,7 @@ export default class DataExtensions {
      * await dataExtensions.delete('customer-de', 'email', 'customer@example.com');
      * ```
      */
-    delete(externalKey: string, primaryKey: string, primaryKeyValue: string): Promise<any>;
+    delete<T = any>(externalKey: string, primaryKey: string, primaryKeyValue: string): Promise<T>;
     /**
      * Deletes multiple records from a data extension with automatic batching
      *
@@ -187,9 +187,9 @@ export default class DataExtensions {
      * await dataExtensions.bulkDelete('customer-de', largeArray, 500);
      * ```
      */
-    bulkDelete(externalKey: string, items: Array<{
+    bulkDelete<T = any>(externalKey: string, items: Array<{
         keys: Record<string, any>;
-    }>, batchSize?: number): Promise<any[]>;
+    }>, batchSize?: number): Promise<T[]>;
     /**
      * Retrieves all rows from a data extension with automatic pagination
      *
