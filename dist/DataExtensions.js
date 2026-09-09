@@ -51,13 +51,13 @@ export default class DataExtensions {
             throw new SalesForceConfigError('Data extension external key is required');
         }
         try {
-            return await this.#SF.api(`/data/v1/customobjectdata/key/${externalKey}/rowset`, 'GET');
+            return await this.#SF.api(`/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`, 'GET');
         }
         catch (error) {
             if (error instanceof SalesForceAPIError) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to get data extension: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/data/v1/customobjectdata/key/${externalKey}/rowset`, 'GET');
+            throw new SalesForceAPIError(`Failed to get data extension: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`, 'GET');
         }
     }
     /**
@@ -90,15 +90,24 @@ export default class DataExtensions {
         if (primaryKeyValue === undefined || primaryKeyValue === null) {
             throw new SalesForceConfigError('Primary key value is required');
         }
+        // The field name is interpolated into the $filter expression as a bare
+        // identifier, so it cannot be encoded away; restrict it to the character set
+        // Marketing Cloud allows for data extension fields instead.
+        if (!/^[A-Za-z0-9_]+$/.test(primaryKey)) {
+            throw new SalesForceConfigError('Primary key field name must contain only letters, numbers and underscores');
+        }
+        // Single quotes terminate an OData string literal. Doubling them is the OData
+        // escape, and must happen before encoding so the pair survives intact.
+        const filterValue = encodeURIComponent(String(primaryKeyValue).replace(/'/g, "''"));
         try {
-            const resData = await this.#SF.api(`/data/v1/customobjectdata/key/${externalKey}/rowset?$filter=${primaryKey} eq '${primaryKeyValue}'`, 'GET');
+            const resData = await this.#SF.api(`/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset?$filter=${primaryKey} eq '${filterValue}'`, 'GET');
             return resData?.items?.[0]?.values;
         }
         catch (error) {
             if (error instanceof SalesForceAPIError) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to get data: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/data/v1/customobjectdata/key/${externalKey}/rowset`, 'GET');
+            throw new SalesForceAPIError(`Failed to get data: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`, 'GET');
         }
     }
     /**
@@ -183,7 +192,7 @@ export default class DataExtensions {
             if (error instanceof SalesForceAPIError) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to update data: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/hub/v1/dataevents/key:${externalKey}/rowset`, 'POST');
+            throw new SalesForceAPIError(`Failed to update data: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset`, 'POST');
         }
     }
     /**
@@ -295,7 +304,7 @@ export default class DataExtensions {
             if (error instanceof SalesForceAPIError) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to delete data: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/hub/v1/dataevents/key:${externalKey}/rowset/delete`, 'POST');
+            throw new SalesForceAPIError(`Failed to delete data: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`, 'POST');
         }
     }
     /**
@@ -356,7 +365,7 @@ export default class DataExtensions {
                 if (error instanceof SalesForceAPIError) {
                     throw error;
                 }
-                throw new SalesForceAPIError(`Failed to bulk delete data: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/hub/v1/dataevents/key:${externalKey}/rowset/delete`, 'POST');
+                throw new SalesForceAPIError(`Failed to bulk delete data: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`, 'POST');
             }
         }
         return results;
@@ -384,7 +393,7 @@ export default class DataExtensions {
         let hasMore = true;
         try {
             while (hasMore) {
-                const data = await this.#SF.api(`/data/v1/customobjectdata/key/${externalKey}/rowset?$pageSize=500&$page=${page}`, 'GET');
+                const data = await this.#SF.api(`/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset?$pageSize=500&$page=${page}`, 'GET');
                 allRows = allRows.concat(data.items || []);
                 hasMore = !!data.links?.next;
                 page++;
@@ -395,7 +404,7 @@ export default class DataExtensions {
             if (error instanceof SalesForceAPIError) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to get all rows: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/data/v1/customobjectdata/key/${externalKey}/rowset`, 'GET');
+            throw new SalesForceAPIError(`Failed to get all rows: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`, 'GET');
         }
     }
     /**

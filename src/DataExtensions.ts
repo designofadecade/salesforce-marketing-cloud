@@ -58,7 +58,7 @@ export default class DataExtensions {
 
         try {
             return await this.#SF.api<DataExtensionResponse>(
-                `/data/v1/customobjectdata/key/${externalKey}/rowset`,
+                `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`,
                 'GET'
             );
         } catch (error) {
@@ -68,7 +68,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to get data extension: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/data/v1/customobjectdata/key/${externalKey}/rowset`,
+                `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`,
                 'GET'
             );
         }
@@ -111,9 +111,24 @@ export default class DataExtensions {
             throw new SalesForceConfigError('Primary key value is required');
         }
 
+        // The field name is interpolated into the $filter expression as a bare
+        // identifier, so it cannot be encoded away; restrict it to the character set
+        // Marketing Cloud allows for data extension fields instead.
+        if (!/^[A-Za-z0-9_]+$/.test(primaryKey)) {
+            throw new SalesForceConfigError(
+                'Primary key field name must contain only letters, numbers and underscores'
+            );
+        }
+
+        // Single quotes terminate an OData string literal. Doubling them is the OData
+        // escape, and must happen before encoding so the pair survives intact.
+        const filterValue = encodeURIComponent(
+            String(primaryKeyValue).replace(/'/g, "''")
+        );
+
         try {
             const resData = await this.#SF.api<DataExtensionResponse>(
-                `/data/v1/customobjectdata/key/${externalKey}/rowset?$filter=${primaryKey} eq '${primaryKeyValue}'`,
+                `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset?$filter=${primaryKey} eq '${filterValue}'`,
                 'GET'
             );
 
@@ -125,7 +140,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to get data: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/data/v1/customobjectdata/key/${externalKey}/rowset`,
+                `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`,
                 'GET'
             );
         }
@@ -239,7 +254,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to update data: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/hub/v1/dataevents/key:${externalKey}/rowset`,
+                `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset`,
                 'POST'
             );
         }
@@ -389,7 +404,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to delete data: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/hub/v1/dataevents/key:${externalKey}/rowset/delete`,
+                `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`,
                 'POST'
             );
         }
@@ -467,7 +482,7 @@ export default class DataExtensions {
                 throw new SalesForceAPIError(
                     `Failed to bulk delete data: ${error instanceof Error ? error.message : 'Unknown error'}`,
                     500,
-                    `/hub/v1/dataevents/key:${externalKey}/rowset/delete`,
+                    `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`,
                     'POST'
                 );
             }
@@ -502,7 +517,7 @@ export default class DataExtensions {
         try {
             while (hasMore) {
                 const data = await this.#SF.api<DataExtensionResponse>(
-                    `/data/v1/customobjectdata/key/${externalKey}/rowset?$pageSize=500&$page=${page}`,
+                    `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset?$pageSize=500&$page=${page}`,
                     'GET'
                 );
 
@@ -519,7 +534,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to get all rows: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/data/v1/customobjectdata/key/${externalKey}/rowset`,
+                `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`,
                 'GET'
             );
         }

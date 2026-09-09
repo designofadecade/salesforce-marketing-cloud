@@ -79,13 +79,13 @@ export default class Assets {
             throw new SalesForceConfigError('Update data is required');
         }
         try {
-            return await this.#SF.api(`/asset/v1/content/assets/${id}`, 'PATCH', data);
+            return await this.#SF.api(`/asset/v1/content/assets/${encodeURIComponent(id)}`, 'PATCH', data);
         }
         catch (error) {
             if (error instanceof SalesForceAPIError) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to update asset: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/asset/v1/content/assets/${id}`, 'PATCH');
+            throw new SalesForceAPIError(`Failed to update asset: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/asset/v1/content/assets/${encodeURIComponent(id)}`, 'PATCH');
         }
     }
 }

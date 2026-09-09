@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import DataExtensions from './DataExtensions.js';
 import type SalesForceClient from './SalesForceClient.js';
+import { SalesForceConfigError } from './errors.js';
 
 describe('DataExtensions', () => {
     let dataExtensions: DataExtensions;
@@ -59,6 +60,51 @@ describe('DataExtensions', () => {
                 'GET'
             );
         });
+
+        // A raw single quote terminates the OData string literal, letting a
+        // user-supplied value rewrite the $filter into a tautology and return
+        // another record entirely.
+        it('should escape single quotes in the filter value', async () => {
+            (mockSFClient.api as any).mockResolvedValueOnce({ items: [] });
+
+            await dataExtensions.getData('test-key', 'email', "x' or email ne 'x");
+
+            const url = (mockSFClient.api as any).mock.calls[0][0] as string;
+            const filter = decodeURIComponent(url.split('$filter=')[1]);
+
+            // The doubled quote keeps the payload inside the string literal.
+            expect(filter).toBe("email eq 'x'' or email ne ''x'");
+            expect(filter).not.toBe("email eq 'x' or email ne 'x'");
+        });
+
+        it('should encode reserved characters in the filter value', async () => {
+            (mockSFClient.api as any).mockResolvedValueOnce({ items: [] });
+
+            await dataExtensions.getData('test-key', 'id', 'a&$top=1#frag');
+
+            const url = (mockSFClient.api as any).mock.calls[0][0] as string;
+            expect(url).not.toContain('&$top=1');
+            expect(url).toContain('%26');
+        });
+
+        it('should encode the external key', async () => {
+            (mockSFClient.api as any).mockResolvedValueOnce({ items: [] });
+
+            await dataExtensions.getData('../../../platform/v1/endpoints', 'id', '1');
+
+            const url = (mockSFClient.api as any).mock.calls[0][0] as string;
+            expect(url).not.toContain('../');
+            expect(url).toContain('%2F');
+        });
+
+        it.each(['id;drop', 'id eq 1', "id'", 'id)', ''])(
+            'should reject unsafe primary key field name %j',
+            async field => {
+                await expect(
+                    dataExtensions.getData('test-key', field, '1')
+                ).rejects.toThrow(SalesForceConfigError);
+            }
+        );
 
         it('should return undefined when no data found', async () => {
             const mockResponse = { items: [] };

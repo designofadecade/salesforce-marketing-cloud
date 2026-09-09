@@ -20,6 +20,21 @@ describe('Assets', () => {
         });
     });
 
+    describe('path encoding', () => {
+        // An unencoded id lets ../ segments retarget the request at a different
+        // REST endpoint, still carrying the caller's bearer token.
+        it('should encode the asset id in update()', async () => {
+            (mockSFClient.api as any).mockResolvedValueOnce({});
+
+            await assets.update('../../../hub/v1/dataevents', { name: 'x' });
+
+            const url = (mockSFClient.api as any).mock.calls[0][0] as string;
+            expect(url).not.toContain('../');
+            expect(url).toContain('%2F');
+            expect(url.startsWith('/asset/v1/content/assets/')).toBe(true);
+        });
+    });
+
     describe('list', () => {
         it('should list assets with correct filter for type 205', async () => {
             const mockAssets = {

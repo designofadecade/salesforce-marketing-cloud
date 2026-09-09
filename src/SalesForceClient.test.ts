@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import SalesForceClient from './SalesForceClient.js';
+import { SalesForceConfigError } from './errors.js';
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -43,6 +44,64 @@ describe('SalesForceClient', () => {
                 accountId: 'test-account-id',
             });
             expect(clientWithoutScope).toBeInstanceOf(SalesForceClient);
+        });
+
+        it.each([
+            ['missing config', undefined],
+            ['missing clientDomain', { clientDomain: '' }],
+            ['missing clientId', { clientDomain: 'd', clientId: '' }],
+            ['missing clientSecret', { clientDomain: 'd', clientId: 'i', clientSecret: '' }],
+        ])('should throw SalesForceConfigError for %s', (_label, partial) => {
+            expect(
+                () =>
+                    new SalesForceClient({
+                        accountId: 'a',
+                        ...(partial as object),
+                    } as never)
+            ).toThrow(SalesForceConfigError);
+        });
+
+        // A clientDomain carrying path or authority characters redirects the auth
+        // request - and the client_secret it carries - to an arbitrary host.
+        it.each([
+            'attacker.example/',
+            'attacker.example/#',
+            'attacker.example/?',
+            'sub.domain',
+            'has space',
+            'has_underscore',
+            '-leading-hyphen',
+        ])('should reject clientDomain %j as unsafe', domain => {
+            expect(
+                () =>
+                    new SalesForceClient({
+                        clientDomain: domain,
+                        clientId: 'i',
+                        clientSecret: 's',
+                        accountId: 'a',
+                    })
+            ).toThrow(SalesForceConfigError);
+        });
+
+        it.each(['test-domain', 'mc563885gzs27c5t9', 'abc123'])(
+            'should accept valid subdomain %j',
+            domain => {
+                expect(
+                    () =>
+                        new SalesForceClient({
+                            clientDomain: domain,
+                            clientId: 'i',
+                            clientSecret: 's',
+                            accountId: 'a',
+                        })
+                ).not.toThrow();
+            }
+        );
+
+        it('should not expose credentials via serialization or reflection', () => {
+            expect(JSON.stringify(client)).toBe('{}');
+            expect(Reflect.ownKeys(client)).toEqual([]);
+            expect(JSON.stringify(client)).not.toContain('test-client-secret');
         });
     });
 

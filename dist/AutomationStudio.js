@@ -1,5 +1,5 @@
 var _a;
-import { SalesForceAPIError, SalesForceConfigError } from './errors.js';
+import { SalesForceAPIError, SalesForceConfigError, toSafeCause, } from './errors.js';
 /**
  * Automation Studio API client for Salesforce Marketing Cloud
  *
@@ -123,13 +123,13 @@ class AutomationStudio {
             throw new SalesForceConfigError('Automation external key is required');
         }
         try {
-            return await this.#SF.api(`/automation/v1/automations/${externalKey}`, 'GET');
+            return await this.#SF.api(`/automation/v1/automations/${encodeURIComponent(externalKey)}`, 'GET');
         }
         catch (error) {
             if (error instanceof SalesForceAPIError) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to get automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${externalKey}`, 'GET');
+            throw new SalesForceAPIError(`Failed to get automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${encodeURIComponent(externalKey)}`, 'GET');
         }
     }
     /**
@@ -249,7 +249,11 @@ class AutomationStudio {
             return soapRes[0]?.OverallStatus === 'OK';
         }
         catch (error) {
-            throw new Error(`Failed to activate automation: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error });
+            throw new Error(`Failed to activate automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 
+            // Attaching the raw error would leak the access token carried in its
+            // axios request config; toSafeCause preserves name, message and code.
+            // eslint-disable-next-line preserve-caught-error
+            { cause: toSafeCause(error) });
         }
     }
     /**
@@ -286,7 +290,11 @@ class AutomationStudio {
             return soapRes[0]?.OverallStatus === 'OK';
         }
         catch (error) {
-            throw new Error(`Failed to pause automation: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error });
+            throw new Error(`Failed to pause automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 
+            // Attaching the raw error would leak the access token carried in its
+            // axios request config; toSafeCause preserves name, message and code.
+            // eslint-disable-next-line preserve-caught-error
+            { cause: toSafeCause(error) });
         }
     }
     /**
@@ -321,13 +329,13 @@ class AutomationStudio {
             throw new SalesForceConfigError('Automation ID is required');
         }
         try {
-            return await this.#SF.api(`/automation/v1/automations/${automationId}/actions/runallonce`, 'POST');
+            return await this.#SF.api(`/automation/v1/automations/${encodeURIComponent(automationId)}/actions/runallonce`, 'POST');
         }
         catch (error) {
             if (error instanceof SalesForceAPIError) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to run automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${automationId}/actions/runallonce`, 'POST');
+            throw new SalesForceAPIError(`Failed to run automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${encodeURIComponent(automationId)}/actions/runallonce`, 'POST');
         }
     }
     /**
@@ -343,6 +351,19 @@ class AutomationStudio {
         if (!timeZoneName) {
             throw new Error(`Unsupported timezone ID: ${timeZoneId}`);
         }
+        // NOTE: Deliberate, do not "fix".
+        //
+        // `dateStr` is parsed as local time, converted to UTC, and then stamped with
+        // the *target* timezone's offset. That is not what a strict ISO 8601 reading
+        // would produce, and it makes the result depend on the host's timezone.
+        //
+        // This is a workaround for Marketing Cloud's handling of Schedule
+        // StartDateTime, arrived at empirically because the documented behaviour did
+        // not hold. Correcting this to a timezone-independent conversion changes the
+        // times SFMC actually schedules and regresses live automations.
+        //
+        // If this needs revisiting, verify against a real SFMC instance rather than
+        // against the ISO 8601 spec.
         const date = new Date(dateStr);
         const isoWithoutZ = date.toISOString().split('Z')[0];
         const parts = new Intl.DateTimeFormat('en-US', {

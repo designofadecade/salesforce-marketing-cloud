@@ -95,7 +95,7 @@ export default class Assets {
 
         try {
             return await this.#SF.api<AssetResponse>(
-                `/asset/v1/content/assets/${id}`,
+                `/asset/v1/content/assets/${encodeURIComponent(id)}`,
                 'PATCH',
                 data
             );
@@ -106,7 +106,7 @@ export default class Assets {
             throw new SalesForceAPIError(
                 `Failed to update asset: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/asset/v1/content/assets/${id}`,
+                `/asset/v1/content/assets/${encodeURIComponent(id)}`,
                 'PATCH'
             );
         }

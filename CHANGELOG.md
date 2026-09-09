@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-09-09
+
+Security patch. No public API changes; drop-in for 2.1.0.
+
+### Security
+- **Fixed access token leaking into logs via the error `cause` chain (regression introduced in 2.1.0).** Transport-level SOAP failures reject with a raw axios error whose `config.data` holds the full request envelope, including the `<fueloauth>` access token. 2.1.0 attached that error directly as `cause`, so `util.inspect`, `console.error` and `AxiosError.toJSON` all serialised a live token. Causes are now reduced to `name`, `message` and `code` via an internal `toSafeCause` helper. Affects `AutomationStudio.activate()`, `AutomationStudio.pause()` and `SalesForceClient.soapClient()`.
+- **Fixed OData filter injection in `DataExtensions.getData()`.** `primaryKeyValue` was interpolated into the `$filter` expression unescaped, so a value containing a single quote could rewrite the filter. Supplying `x' or email ne 'x` produced a tautology matching every row, and `getData` returns the first one — leaking another record to the caller. Values now have quotes doubled per OData and are URL-encoded; field names are restricted to `[A-Za-z0-9_]` and rejected with `SalesForceConfigError` otherwise.
+- **Fixed path traversal via unencoded identifiers.** `externalKey`, `automationId` and asset `id` were interpolated into REST paths without encoding in six places, letting `../` segments retarget a request at a different Marketing Cloud endpoint while still carrying the caller's bearer token. All path parameters are now passed through `encodeURIComponent`, matching what `insert()`/`update()`/`delete()`/`bulkDelete()` already did. Affects `DataExtensions.get()`, `.getData()`, `.getAllRows()`, `AutomationStudio.get()`, `.run()` and `Assets.update()`.
+- **Added `clientDomain` validation.** The value is interpolated directly into the auth and SOAP hostnames, so a value such as `attacker.example/` redirected the token request — and the `client_id` and `client_secret` in its body — to an arbitrary host. The constructor now requires a bare subdomain (`[A-Za-z0-9][A-Za-z0-9-]*`) and throws `SalesForceConfigError` otherwise.
+
+### Changed
+- Error `endpoint` values now match the encoded path actually requested, rather than the raw identifier.
+
+### Documentation
+- Documented the timezone handling in `AutomationStudio.#getFormattedDateForTimezone()` as a deliberate Marketing Cloud workaround. The conversion is host-timezone dependent and does not match a strict ISO 8601 reading, but it reflects observed SFMC scheduling behaviour and must not be "corrected" without verifying against a live instance.
+
+### Tests
+- 76 → 109 tests. Added regression coverage for every issue above: OData quote escaping and field-name validation, path encoding across all six call sites, `clientDomain` rejection, and assertions that a serialised error chain never contains an access token. All new security tests were confirmed to fail against the unfixed code.
+- Added `src/errors.test.ts` covering the error classes and `toSafeCause`.
+
 ## [2.1.0] - 2026-09-09
 
 ### Security

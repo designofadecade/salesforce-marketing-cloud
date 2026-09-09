@@ -1,5 +1,5 @@
 import Soap from 'soap';
-import { SalesForceAPIError, SalesForceAuthError, SalesForceConfigError, } from './errors.js';
+import { SalesForceAPIError, SalesForceAuthError, SalesForceConfigError, toSafeCause, } from './errors.js';
 /**
  * Salesforce Marketing Cloud API Client
  *
@@ -45,6 +45,13 @@ export default class SalesForceClient {
         }
         if (!config.clientDomain) {
             throw new SalesForceConfigError('clientDomain is required');
+        }
+        // clientDomain is interpolated directly into the API hostnames below, so a
+        // value containing path or authority characters would redirect requests (and
+        // the credentials they carry) to an arbitrary host. Marketing Cloud tenant
+        // subdomains are alphanumeric with hyphens.
+        if (!/^[A-Za-z0-9][A-Za-z0-9-]*$/.test(config.clientDomain)) {
+            throw new SalesForceConfigError('clientDomain must be a bare Marketing Cloud subdomain containing only letters, numbers and hyphens');
         }
         if (!config.clientId) {
             throw new SalesForceConfigError('clientId is required');
@@ -205,7 +212,11 @@ export default class SalesForceClient {
             return client;
         }
         catch (error) {
-            throw new Error(`Failed to create SOAP client: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error });
+            throw new Error(`Failed to create SOAP client: ${error instanceof Error ? error.message : 'Unknown error'}`, 
+            // Attaching the raw error would leak the access token carried in its
+            // axios request config; toSafeCause preserves name, message and code.
+            // eslint-disable-next-line preserve-caught-error
+            { cause: toSafeCause(error) });
         }
     }
 }

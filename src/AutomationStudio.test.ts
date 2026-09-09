@@ -315,4 +315,26 @@ describe('AutomationStudio', () => {
             );
         });
     });
+
+    describe('path encoding', () => {
+        it('should encode the external key in get()', async () => {
+            (mockSFClient.api as any).mockResolvedValueOnce({});
+
+            await automationStudio.get('../../../hub/v1/dataevents');
+
+            const url = (mockSFClient.api as any).mock.calls[0][0] as string;
+            expect(url).not.toContain('../');
+            expect(url).toContain('%2F');
+        });
+
+        it('should encode the automation id in run()', async () => {
+            (mockSFClient.api as any).mockResolvedValueOnce({});
+
+            await automationStudio.run('../../../hub/v1/dataevents');
+
+            const url = (mockSFClient.api as any).mock.calls[0][0] as string;
+            expect(url).not.toContain('../');
+            expect(url).toContain('%2F');
+        });
+    });
 });
