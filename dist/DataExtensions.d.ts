@@ -193,11 +193,20 @@ export default class DataExtensions {
      *
      * // Custom batch size for very large datasets
      * await dataExtensions.bulkDelete('customer-de', largeArray, 500);
+     *
+     * // Send up to 4 batches at a time for a large delete
+     * await dataExtensions.bulkDelete('customer-de', largeArray, 1000, 4);
      * ```
+     *
+     * @remarks
+     * Batches are sent one at a time by default. Raising `concurrency` sends
+     * several in flight at once, which is markedly faster for large deletes, but
+     * means that when one batch fails others may already have been sent and
+     * cannot be rolled back. The error reports how many batches succeeded.
      */
     bulkDelete<T = any>(externalKey: string, items: Array<{
         keys: Record<string, any>;
-    }>, batchSize?: number): Promise<T[]>;
+    }>, batchSize?: number, concurrency?: number): Promise<T[]>;
     /**
      * Retrieves all rows from a data extension with automatic pagination
      *

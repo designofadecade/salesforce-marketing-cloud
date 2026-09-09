@@ -202,6 +202,24 @@ Deletes a record.
 await dataExtensions.delete('customer-de', 'email', 'old@example.com');
 ```
 
+##### `bulkDelete(externalKey, items, batchSize?, concurrency?): Promise<T[]>`
+
+Deletes many rows, splitting them into batches (1,000 per batch by default).
+
+```typescript
+await dataExtensions.bulkDelete('customer-de', rowsToDelete);
+
+// Send up to 4 batches at a time — markedly faster for large deletes
+await dataExtensions.bulkDelete('customer-de', rowsToDelete, 1000, 4);
+```
+
+Batches are sent one at a time unless `concurrency` is raised. Sent batches
+cannot be rolled back, so if one fails the error reports how many completed:
+
+```
+Error: 500 ... (batch 3 of 20 failed; 2 of 20 batches completed)
+```
+
 ##### `getAllRows(externalKey: string): Promise<DataExtensionRow[]>`
 
 Gets all rows with automatic pagination.
@@ -402,6 +420,13 @@ try {
   }
 }
 ```
+
+> **Upgrading from 2.1.x or earlier:** authentication failures raised through
+> wrapper methods (`DataExtensions`, `Assets`, `AutomationStudio`) used to surface
+> as `SalesForceAPIError` with a fabricated `statusCode` of 500. They are now
+> `SalesForceAuthError` carrying the real status. Code that caught
+> `SalesForceAPIError` to handle auth problems needs to catch
+> `SalesForceAuthError` instead.
 
 Wrapped failures carry a sanitized `cause` (`name`, `message` and `code` only).
 The underlying transport error is deliberately **not** attached, because for SOAP

@@ -19,6 +19,80 @@ describe('DataExtensions', () => {
         dataExtensions = new DataExtensions(mockSFClient as SalesForceClient);
     });
 
+    describe('bulkDelete concurrency', () => {
+        it.each([0, -1, 1.5, NaN])('should reject concurrency %p', async c => {
+            await expect(
+                dataExtensions.bulkDelete('k', [{ keys: { id: '1' } }], 1000, c)
+            ).rejects.toThrow(SalesForceConfigError);
+        });
+
+        it('should send one batch at a time by default', async () => {
+            let inFlight = 0;
+            let peak = 0;
+            (mockSFClient.api as any).mockImplementation(async () => {
+                inFlight++;
+                peak = Math.max(peak, inFlight);
+                await new Promise(r => setTimeout(r, 5));
+                inFlight--;
+                return { ok: true };
+            });
+
+            const items = Array.from({ length: 6 }, (_, i) => ({ keys: { id: String(i) } }));
+            await dataExtensions.bulkDelete('k', items, 1);
+
+            expect(peak).toBe(1);
+        });
+
+        it('should overlap requests up to the concurrency limit', async () => {
+            let inFlight = 0;
+            let peak = 0;
+            (mockSFClient.api as any).mockImplementation(async () => {
+                inFlight++;
+                peak = Math.max(peak, inFlight);
+                await new Promise(r => setTimeout(r, 5));
+                inFlight--;
+                return { ok: true };
+            });
+
+            const items = Array.from({ length: 6 }, (_, i) => ({ keys: { id: String(i) } }));
+            await dataExtensions.bulkDelete('k', items, 1, 3);
+
+            expect(peak).toBe(3);
+        });
+
+        it('should preserve result order regardless of completion order', async () => {
+            (mockSFClient.api as any).mockImplementation(async (_u: string, _m: string, batch: any[]) => {
+                // Later batches resolve first.
+                await new Promise(r => setTimeout(r, 10 - Number(batch[0].keys.id)));
+                return { id: batch[0].keys.id };
+            });
+
+            const items = Array.from({ length: 4 }, (_, i) => ({ keys: { id: String(i) } }));
+            const results = await dataExtensions.bulkDelete('k', items, 1, 4);
+
+            expect(results.map((r: any) => r.id)).toEqual(['0', '1', '2', '3']);
+        });
+
+        it('should report how many batches completed when one fails', async () => {
+            (mockSFClient.api as any).mockImplementation(async (_u: string, _m: string, batch: any[]) => {
+                if (batch[0].keys.id === '2') {
+                    throw new SalesForceAPIError('Error: 500 boom', 500, '/p', 'POST');
+                }
+                return { ok: true };
+            });
+
+            const items = Array.from({ length: 4 }, (_, i) => ({ keys: { id: String(i) } }));
+            const thrown = await dataExtensions
+                .bulkDelete('k', items, 1, 4)
+                .catch(e => e);
+
+            expect(thrown).toBeInstanceOf(SalesForceAPIError);
+            expect(thrown.statusCode).toBe(500);
+            // Three of the four succeeded even though batch 3 failed.
+            expect(thrown.message).toContain('3 of 4 batches completed');
+        });
+    });
+
     describe('getAllRows pagination safety', () => {
         it('should abort after MAX_PAGES instead of looping forever', async () => {
             (mockSFClient.api as any).mockResolvedValue({

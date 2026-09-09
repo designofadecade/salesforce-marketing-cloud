@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-09-09
+
+### Added
+- **`bulkDelete()` accepts an optional `concurrency` argument** (default `1`, i.e. unchanged behavior). Batches were always sent one at a time, so a large delete cost one full round-trip per batch. Raising `concurrency` sends a window of batches in flight at once. Measured against a simulated 25 ms round-trip, a 20,000-row delete (20 batches) went from 515 ms to 129 ms at `concurrency: 4` and 78 ms at `8`. Results keep their batch order regardless of completion order, and a failure still reports how many batches completed — with concurrency, successes within the failing window are counted before the error is raised. Sent batches cannot be rolled back, which is why this is opt-in rather than the default.
+- CI gained a non-blocking `typescript-next` job that typechecks against `typescript@next`. TypeScript 7 cannot be adopted yet — typescript-eslint 8.70.0 caps at `typescript <6.1.0` and there is no v9 — but the source already compiles clean under 7.0.2 with byte-identical emit, so this surfaces a regression before the switch becomes possible.
+
+### Documentation
+- README documents `bulkDelete()`'s batching and concurrency, including the partial-failure reporting.
+- README gained an upgrade note for the 2.2.0 error-type change: authentication failures through wrapper methods are now `SalesForceAuthError` with the real status, not `SalesForceAPIError` with a fabricated 500.
+
+### Tests
+- 165 → 173 tests, covering concurrency validation, that the default sends one batch at a time, that raising it overlaps requests up to the limit, that result order is preserved when batches finish out of order, and that the completed-batch count is correct when one batch in a concurrent window fails.
+
+### Notes
+- `AutomationStudio.activate()` and its timezone handling remain untouched, as they have since 2.0.0. The only change ever made to that method was attaching a sanitized error `cause` in 2.1.1; the date logic is byte-identical.
+
 ## [2.4.0] - 2026-09-09
 
 Follow-up to an independent security re-review of 2.3.0, which confirmed the 2.1.1 fixes are complete and found no new way for a token or secret to escape. This release fixes the issues it did surface, plus a functional regression from 2.2.0.

@@ -47,3 +47,25 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
         continue-on-error: true
+
+  # Non-blocking early warning: TypeScript 7 cannot be adopted yet because
+  # typescript-eslint caps at <6.1.0, but the source already compiles clean
+  # under it. This job surfaces a regression before the switch becomes possible.
+  typescript-next:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck against TypeScript next
+        run: npx -y -p typescript@next tsc --noEmit

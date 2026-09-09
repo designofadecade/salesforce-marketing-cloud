@@ -345,9 +345,18 @@ export default class DataExtensions {
      *
      * // Custom batch size for very large datasets
      * await dataExtensions.bulkDelete('customer-de', largeArray, 500);
+     *
+     * // Send up to 4 batches at a time for a large delete
+     * await dataExtensions.bulkDelete('customer-de', largeArray, 1000, 4);
      * ```
+     *
+     * @remarks
+     * Batches are sent one at a time by default. Raising `concurrency` sends
+     * several in flight at once, which is markedly faster for large deletes, but
+     * means that when one batch fails others may already have been sent and
+     * cannot be rolled back. The error reports how many batches succeeded.
      */
-    async bulkDelete(externalKey, items, batchSize = 1000) {
+    async bulkDelete(externalKey, items, batchSize = 1000, concurrency = 1) {
         if (!externalKey) {
             throw new SalesForceConfigError('Data extension external key is required');
         }
@@ -360,33 +369,47 @@ export default class DataExtensions {
         if (!Number.isInteger(batchSize) || batchSize < 1) {
             throw new SalesForceConfigError('Batch size must be a positive integer');
         }
+        if (!Number.isInteger(concurrency) || concurrency < 1) {
+            throw new SalesForceConfigError('Concurrency must be a positive integer');
+        }
         // Split items into batches
         const batches = [];
         for (let i = 0; i < items.length; i += batchSize) {
             batches.push(items.slice(i, i + batchSize));
         }
-        // Process each batch sequentially. Batches already sent cannot be rolled
-        // back, so failures report how far the deletion got.
-        const results = [];
-        for (const [index, batch] of batches.entries()) {
-            const progress = `batch ${index + 1} of ${batches.length}`;
-            try {
-                const result = await this.#SF.api(`/hub/v1/dataevents/key:${encodeParam(externalKey, 'External key')}/rowset/delete`, 'POST', batch);
-                results.push(result);
+        // Batches run in windows of `concurrency` (1 by default, i.e. one at a
+        // time). Sent batches cannot be rolled back, so a failure reports how many
+        // completed rather than pretending the operation was atomic.
+        const results = new Array(batches.length);
+        const endpoint = `/hub/v1/dataevents/key:${encodeParam(externalKey, 'External key')}/rowset/delete`;
+        let completedCount = 0;
+        const describe = (index) => `batch ${index + 1} of ${batches.length} failed; ${completedCount} of ${batches.length} batches completed`;
+        const wrap = (error, index) => {
+            const detail = describe(index);
+            // An API error keeps its original status; auth and config errors pass
+            // through untouched so their type stays meaningful to the caller.
+            if (error instanceof SalesForceAPIError) {
+                throw new SalesForceAPIError(`${error.message} (${detail})`, error.statusCode, error.endpoint, error.method, { cause: error });
             }
-            catch (error) {
-                const completed = `${progress} failed; ${index} of ${batches.length} batches completed`;
-                // Already-sent batches cannot be rolled back, so the caller needs to
-                // know how far the deletion got. An API error is re-raised with that
-                // context and its original status; auth and config errors pass
-                // through untouched so their type stays meaningful.
-                if (error instanceof SalesForceAPIError) {
-                    throw new SalesForceAPIError(`${error.message} (${completed})`, error.statusCode, error.endpoint, error.method, { cause: error });
+            if (isSalesForceError(error)) {
+                throw error;
+            }
+            throw new SalesForceAPIError(`Failed to bulk delete data (${detail}): ${error instanceof Error ? error.message : 'Unknown error'}`, 500, endpoint, 'POST', { cause: toSafeCause(error) });
+        };
+        for (let start = 0; start < batches.length; start += concurrency) {
+            const window = batches.slice(start, start + concurrency);
+            const settled = await Promise.allSettled(window.map(batch => this.#SF.api(endpoint, 'POST', batch)));
+            // Count successes before reporting a failure, so the progress figure
+            // reflects everything that actually landed in this window.
+            settled.forEach((outcome, offset) => {
+                if (outcome.status === 'fulfilled') {
+                    results[start + offset] = outcome.value;
+                    completedCount++;
                 }
-                if (isSalesForceError(error)) {
-                    throw error;
-                }
-                throw new SalesForceAPIError(`Failed to bulk delete data (${completed}): ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/hub/v1/dataevents/key:${encodeParam(externalKey, 'External key')}/rowset/delete`, 'POST', { cause: toSafeCause(error) });
+            });
+            const failure = settled.findIndex(o => o.status === 'rejected');
+            if (failure !== -1) {
+                wrap(settled[failure].reason, start + failure);
             }
         }
         return results;
