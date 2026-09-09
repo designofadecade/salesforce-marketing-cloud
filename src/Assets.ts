@@ -4,6 +4,7 @@ import {
     SalesForceConfigError,
     isSalesForceError,
     toSafeCause,
+    encodeParam,
 } from './errors.js';
 import type { AssetResponse, AssetsListResponse } from './types.js';
 
@@ -101,7 +102,7 @@ export default class Assets {
 
         try {
             return await this.#SF.api<AssetResponse>(
-                `/asset/v1/content/assets/${encodeURIComponent(id)}`,
+                `/asset/v1/content/assets/${encodeParam(id, 'Asset ID')}`,
                 'PATCH',
                 data
             );
@@ -112,7 +113,7 @@ export default class Assets {
             throw new SalesForceAPIError(
                 `Failed to update asset: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/asset/v1/content/assets/${encodeURIComponent(id)}`,
+                `/asset/v1/content/assets/${encodeParam(id, 'Asset ID')}`,
                 'PATCH',
                 { cause: toSafeCause(error) }
             );

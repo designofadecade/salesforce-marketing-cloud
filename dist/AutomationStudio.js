@@ -1,5 +1,5 @@
 var _a;
-import { SalesForceAPIError, SalesForceConfigError, toSafeCause, isSalesForceError, } from './errors.js';
+import { SalesForceAPIError, SalesForceConfigError, toSafeCause, isSalesForceError, encodeParam, } from './errors.js';
 /**
  * Automation Studio API client for Salesforce Marketing Cloud
  *
@@ -68,6 +68,15 @@ class AutomationStudio {
     }
     async getAll(options) {
         const { page: requestedPage, pageSize = 500 } = options || {};
+        // These are interpolated into the query string. They are typed as numbers,
+        // but nothing enforces that at runtime, so a string reaching here from
+        // untyped code (req.query.page, for instance) could append parameters.
+        if (requestedPage !== undefined && !Number.isInteger(requestedPage)) {
+            throw new SalesForceConfigError('page must be an integer');
+        }
+        if (!Number.isInteger(pageSize) || pageSize < 1) {
+            throw new SalesForceConfigError('pageSize must be a positive integer');
+        }
         try {
             // If specific page requested, return single page response
             if (requestedPage !== undefined) {
@@ -116,13 +125,13 @@ class AutomationStudio {
             throw new SalesForceConfigError('Automation external key is required');
         }
         try {
-            return await this.#SF.api(`/automation/v1/automations/${encodeURIComponent(externalKey)}`, 'GET');
+            return await this.#SF.api(`/automation/v1/automations/${encodeParam(externalKey, 'External key')}`, 'GET');
         }
         catch (error) {
             if (isSalesForceError(error)) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to get automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${encodeURIComponent(externalKey)}`, 'GET', { cause: toSafeCause(error) });
+            throw new SalesForceAPIError(`Failed to get automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${encodeParam(externalKey, 'External key')}`, 'GET', { cause: toSafeCause(error) });
         }
     }
     /**
@@ -291,18 +300,31 @@ class AutomationStudio {
         }
     }
     /**
-     * Placeholder method for deleting an automation
+     * Deletes an automation
      *
      * @param automationId - The ID of the automation to delete
-     * @deprecated This method is not yet implemented
+     * @returns The API response, if the endpoint returns one
+     * @throws {SalesForceConfigError} If the automation ID is missing
+     * @throws {SalesForceAPIError} If the request fails
+     *
+     * @example
+     * ```typescript
+     * await automationStudio.delete('automation-id');
+     * ```
      */
     async delete(automationId) {
         if (!automationId) {
             throw new SalesForceConfigError('Automation ID is required');
         }
-        // Implementation pending. Thrown as an SDK error so callers can catch it
-        // alongside every other failure from this class rather than a bare Error.
-        throw new SalesForceConfigError('AutomationStudio.delete() is not implemented; delete the automation in Marketing Cloud or via the SOAP API');
+        try {
+            return await this.#SF.api(`/automation/v1/automations/${encodeParam(automationId, 'Automation ID')}`, 'DELETE');
+        }
+        catch (error) {
+            if (isSalesForceError(error)) {
+                throw error;
+            }
+            throw new SalesForceAPIError(`Failed to delete automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${encodeParam(automationId, 'Automation ID')}`, 'DELETE', { cause: toSafeCause(error) });
+        }
     }
     /**
      * Runs an automation immediately (run once)
@@ -323,13 +345,13 @@ class AutomationStudio {
             throw new SalesForceConfigError('Automation ID is required');
         }
         try {
-            return await this.#SF.api(`/automation/v1/automations/${encodeURIComponent(automationId)}/actions/runallonce`, 'POST');
+            return await this.#SF.api(`/automation/v1/automations/${encodeParam(automationId, 'Automation ID')}/actions/runallonce`, 'POST');
         }
         catch (error) {
             if (isSalesForceError(error)) {
                 throw error;
             }
-            throw new SalesForceAPIError(`Failed to run automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${encodeURIComponent(automationId)}/actions/runallonce`, 'POST', { cause: toSafeCause(error) });
+            throw new SalesForceAPIError(`Failed to run automation: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, `/automation/v1/automations/${encodeParam(automationId, 'Automation ID')}/actions/runallonce`, 'POST', { cause: toSafeCause(error) });
         }
     }
     /**

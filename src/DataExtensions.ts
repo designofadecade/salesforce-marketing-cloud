@@ -4,6 +4,7 @@ import {
     SalesForceConfigError,
     isSalesForceError,
     toSafeCause,
+    encodeParam,
 } from './errors.js';
 import type { DataExtensionRow, DataExtensionResponse } from './types.js';
 
@@ -72,7 +73,7 @@ export default class DataExtensions {
 
         try {
             return await this.#SF.api<DataExtensionResponse>(
-                `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`,
+                `/data/v1/customobjectdata/key/${encodeParam(externalKey, 'External key')}/rowset`,
                 'GET'
             );
         } catch (error) {
@@ -82,7 +83,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to get data extension: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`,
+                `/data/v1/customobjectdata/key/${encodeParam(externalKey, 'External key')}/rowset`,
                 'GET',
                 { cause: toSafeCause(error) }
             );
@@ -137,13 +138,14 @@ export default class DataExtensions {
 
         // Single quotes terminate an OData string literal. Doubling them is the OData
         // escape, and must happen before encoding so the pair survives intact.
-        const filterValue = encodeURIComponent(
-            String(primaryKeyValue).replace(/'/g, "''")
+        const filterValue = encodeParam(
+            String(primaryKeyValue).replace(/'/g, "''"),
+            'Primary key value'
         );
 
         try {
             const resData = await this.#SF.api<DataExtensionResponse>(
-                `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset?$filter=${primaryKey} eq '${filterValue}'`,
+                `/data/v1/customobjectdata/key/${encodeParam(externalKey, 'External key')}/rowset?$filter=${primaryKey} eq '${filterValue}'`,
                 'GET'
             );
 
@@ -155,7 +157,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to get data: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`,
+                `/data/v1/customobjectdata/key/${encodeParam(externalKey, 'External key')}/rowset`,
                 'GET',
                 { cause: toSafeCause(error) }
             );
@@ -193,7 +195,7 @@ export default class DataExtensions {
 
         try {
             return await this.#SF.api(
-                `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset`,
+                `/hub/v1/dataevents/key:${encodeParam(externalKey, 'External key')}/rowset`,
                 'POST',
                 items
             );
@@ -204,7 +206,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to insert data: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset`,
+                `/hub/v1/dataevents/key:${encodeParam(externalKey, 'External key')}/rowset`,
                 'POST',
                 { cause: toSafeCause(error) }
             );
@@ -256,7 +258,7 @@ export default class DataExtensions {
 
         try {
             return await this.#SF.api(
-                `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset`,
+                `/hub/v1/dataevents/key:${encodeParam(externalKey, 'External key')}/rowset`,
                 'POST',
                 [
                     {
@@ -274,7 +276,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to update data: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset`,
+                `/hub/v1/dataevents/key:${encodeParam(externalKey, 'External key')}/rowset`,
                 'POST',
                 { cause: toSafeCause(error) }
             );
@@ -312,7 +314,7 @@ export default class DataExtensions {
 
         try {
             return await this.#SF.api(
-                `/data/v1/async/dataextensions/key:${encodeURIComponent(externalKey)}/rows`,
+                `/data/v1/async/dataextensions/key:${encodeParam(externalKey, 'External key')}/rows`,
                 'POST',
                 {
                     items: items,
@@ -325,7 +327,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to insert data asynchronously: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/data/v1/async/dataextensions/key:${encodeURIComponent(externalKey)}/rows`,
+                `/data/v1/async/dataextensions/key:${encodeParam(externalKey, 'External key')}/rows`,
                 'POST',
                 { cause: toSafeCause(error) }
             );
@@ -362,7 +364,7 @@ export default class DataExtensions {
 
         try {
             return await this.#SF.api(
-                `/data/v1/async/dataextensions/key:${encodeURIComponent(externalKey)}/rows`,
+                `/data/v1/async/dataextensions/key:${encodeParam(externalKey, 'External key')}/rows`,
                 'PUT',
                 {
                     items: items,
@@ -375,7 +377,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to update data asynchronously: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/data/v1/async/dataextensions/key:${encodeURIComponent(externalKey)}/rows`,
+                `/data/v1/async/dataextensions/key:${encodeParam(externalKey, 'External key')}/rows`,
                 'PUT',
                 { cause: toSafeCause(error) }
             );
@@ -416,7 +418,7 @@ export default class DataExtensions {
 
         try {
             return await this.#SF.api(
-                `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`,
+                `/hub/v1/dataevents/key:${encodeParam(externalKey, 'External key')}/rowset/delete`,
                 'POST',
                 [
                     {
@@ -433,7 +435,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to delete data: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`,
+                `/hub/v1/dataevents/key:${encodeParam(externalKey, 'External key')}/rowset/delete`,
                 'POST',
                 { cause: toSafeCause(error) }
             );
@@ -507,19 +509,36 @@ export default class DataExtensions {
             const progress = `batch ${index + 1} of ${batches.length}`;
             try {
                 const result = await this.#SF.api<T>(
-                    `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`,
+                    `/hub/v1/dataevents/key:${encodeParam(externalKey, 'External key')}/rowset/delete`,
                     'POST',
                     batch
                 );
                 results.push(result);
             } catch (error) {
+                const completed = `${progress} failed; ${index} of ${batches.length} batches completed`;
+
+                // Already-sent batches cannot be rolled back, so the caller needs to
+                // know how far the deletion got. An API error is re-raised with that
+                // context and its original status; auth and config errors pass
+                // through untouched so their type stays meaningful.
+                if (error instanceof SalesForceAPIError) {
+                    throw new SalesForceAPIError(
+                        `${error.message} (${completed})`,
+                        error.statusCode,
+                        error.endpoint,
+                        error.method,
+                        { cause: error }
+                    );
+                }
+
                 if (isSalesForceError(error)) {
                     throw error;
                 }
+
                 throw new SalesForceAPIError(
-                    `Failed to bulk delete data on ${progress} (${index} of ${batches.length} batches completed): ${error instanceof Error ? error.message : 'Unknown error'}`,
+                    `Failed to bulk delete data (${completed}): ${error instanceof Error ? error.message : 'Unknown error'}`,
                     500,
-                    `/hub/v1/dataevents/key:${encodeURIComponent(externalKey)}/rowset/delete`,
+                    `/hub/v1/dataevents/key:${encodeParam(externalKey, 'External key')}/rowset/delete`,
                     'POST',
                     { cause: toSafeCause(error) }
                 );
@@ -560,13 +579,13 @@ export default class DataExtensions {
                     throw new SalesForceAPIError(
                         `Pagination exceeded ${DataExtensions.MAX_PAGES} pages; aborting to avoid an unbounded loop`,
                         500,
-                        `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`,
+                        `/data/v1/customobjectdata/key/${encodeParam(externalKey, 'External key')}/rowset`,
                         'GET'
                     );
                 }
 
                 const data = await this.#SF.api<DataExtensionResponse>(
-                    `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset?$pageSize=500&$page=${page}`,
+                    `/data/v1/customobjectdata/key/${encodeParam(externalKey, 'External key')}/rowset?$pageSize=500&$page=${page}`,
                     'GET'
                 );
 
@@ -583,7 +602,7 @@ export default class DataExtensions {
             throw new SalesForceAPIError(
                 `Failed to get all rows: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 500,
-                `/data/v1/customobjectdata/key/${encodeURIComponent(externalKey)}/rowset`,
+                `/data/v1/customobjectdata/key/${encodeParam(externalKey, 'External key')}/rowset`,
                 'GET',
                 { cause: toSafeCause(error) }
             );

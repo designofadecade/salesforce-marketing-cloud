@@ -51,4 +51,17 @@ export declare function toSafeCause(error: unknown): {
  * @returns True if the value is a SalesForce SDK error
  */
 export declare function isSalesForceError(error: unknown): error is SalesForceAPIError | SalesForceAuthError | SalesForceConfigError;
+/**
+ * Percent-encodes a value for use in a URL path segment or query value.
+ *
+ * `encodeURIComponent` throws a raw `URIError` for a lone surrogate, which would
+ * escape the SDK's error hierarchy and bypass a caller's `SalesForceConfigError`
+ * handling. Malformed input is a caller mistake, so it is reported as one.
+ *
+ * @param value - The value to encode
+ * @param label - Human-readable name of the parameter, used in the error message
+ * @returns The percent-encoded value
+ * @throws {SalesForceConfigError} If the value cannot be encoded
+ */
+export declare function encodeParam(value: string, label: string): string;
 //# sourceMappingURL=errors.d.ts.map

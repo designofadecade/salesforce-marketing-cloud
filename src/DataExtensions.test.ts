@@ -78,7 +78,7 @@ describe('DataExtensions', () => {
                 .catch(e => e);
 
             expect(thrown).toBeInstanceOf(SalesForceAPIError);
-            expect(thrown.message).toContain('batch 2 of 3');
+            expect(thrown.message).toContain('batch 2 of 3 failed');
             expect(thrown.message).toContain('1 of 3 batches completed');
         });
     });
@@ -552,7 +552,7 @@ describe('DataExtensions', () => {
             );
 
             await expect(dataExtensions.bulkDelete('test-key', items)).rejects.toThrow(
-                /Failed to bulk delete data on batch 1 of 1 \(0 of 1 batches completed\): Network error/
+                /Failed to bulk delete data \(batch 1 of 1 failed; 0 of 1 batches completed\): Network error/
             );
         });
     });

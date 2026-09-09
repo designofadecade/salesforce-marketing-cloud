@@ -99,3 +99,25 @@ export function isSalesForceError(
         error instanceof SalesForceConfigError
     );
 }
+
+/**
+ * Percent-encodes a value for use in a URL path segment or query value.
+ *
+ * `encodeURIComponent` throws a raw `URIError` for a lone surrogate, which would
+ * escape the SDK's error hierarchy and bypass a caller's `SalesForceConfigError`
+ * handling. Malformed input is a caller mistake, so it is reported as one.
+ *
+ * @param value - The value to encode
+ * @param label - Human-readable name of the parameter, used in the error message
+ * @returns The percent-encoded value
+ * @throws {SalesForceConfigError} If the value cannot be encoded
+ */
+export function encodeParam(value: string, label: string): string {
+    try {
+        return encodeURIComponent(value);
+    } catch {
+        throw new SalesForceConfigError(
+            `${label} contains characters that cannot be encoded for a URL`
+        );
+    }
+}

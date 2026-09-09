@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-09-09
+
+Follow-up to an independent security re-review of 2.3.0, which confirmed the 2.1.1 fixes are complete and found no new way for a token or secret to escape. This release fixes the issues it did surface, plus a functional regression from 2.2.0.
+
+### Fixed
+- **`bulkDelete()` progress reporting never actually fired (regression introduced in 2.2.0).** `SalesForceClient.api()` wraps every HTTP failure as a `SalesForceAPIError`, so the `isSalesForceError()` passthrough always matched first and the `"batch N of M"` context added in 2.2.0 was dead code. The 2.2.0 test only passed because it rejected with a plain `Error`, which is not what `api()` throws. An API error is now re-raised with the progress context and its original `statusCode`, with the original attached as `cause`; auth and config errors still pass through untouched.
+- **Query parameters in `AutomationStudio.getAll()` were interpolated unencoded.** `page` and `pageSize` are typed as numbers, but nothing enforced that at runtime, so a string arriving from untyped code (`req.query.page`, for example) could append arbitrary query parameters to an authenticated request. Both are now validated as integers.
+- **Malformed identifiers threw a raw `URIError`.** `encodeURIComponent` throws for a lone surrogate, which escaped the SDK error hierarchy entirely — a caller catching `SalesForceConfigError` or `SalesForceAPIError` would miss it. All URL parameter encoding now goes through an internal `encodeParam` helper that reports malformed input as `SalesForceConfigError`.
+- **Error metadata no longer records query strings.** `SalesForceAPIError.endpoint` held the full endpoint including the query, so after the 2.2.0 passthrough change a failing `getData()` call put the `$filter` value — typically a subscriber email — into every error log. `endpoint` is now the path only, which is also what error aggregators group on.
+
+### Documentation
+- `soapClient()` now documents that the returned client retains the access token: it is set as a SOAP header, `soap` keeps the full envelope on `client.lastRequest` after any call, and async SOAP methods resolve a tuple whose fourth element is the raw request XML. Logging any of those leaks a live token. The SDK's own `activate()` and `pause()` read only `[0].OverallStatus`.
+- README gained a complete error-handling section reflecting how the classes actually behave, and documents the now-implemented `AutomationStudio.delete()`.
+
+### Added
+- `AutomationStudio.delete()` is implemented. It previously shipped as a method that unconditionally threw. It now issues `DELETE /automation/v1/automations/{id}` with the same validation, encoding and error handling as the rest of the class. Verified against the documented endpoint and covered by tests, but not exercised against a live Marketing Cloud tenant.
+
+### Tests
+- 128 → 165 tests. Coverage rose from 78.16% lines / 57.35% branches to **97.4% lines / 88.46% branches / 100% functions**.
+- The repository has always declared an 80% coverage threshold, but CI ran `test:coverage` with `continue-on-error: true`, so the failure was invisible. CI now gates on both coverage and the linter; only the Codecov upload remains best-effort.
+- Added systematic coverage of all argument-validation branches, all error-wrapping paths (each asserting the sanitized `cause` carries no token), SOAP client failure paths, non-`Error` rejections, and SDK error passthrough.
+
+### Behavior changes
+- `SalesForceAPIError.endpoint` is the path without the query string.
+- `getAll()` rejects non-integer `page` or `pageSize` rather than interpolating them.
+- Malformed identifiers raise `SalesForceConfigError` instead of `URIError`.
+- `bulkDelete()` API failures are re-raised with progress context rather than passed through by identity; `statusCode` and type are preserved and the original is available on `cause`.
+
 ## [2.3.0] - 2026-09-09
 
 Production-readiness release: runtime compatibility, pagination safety, API typing and CI gating.

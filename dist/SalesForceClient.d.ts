@@ -75,6 +75,13 @@ export default class SalesForceClient {
      * const soapClient = await client.soapClient();
      * const result = await soapClient.RetrieveAsync({ ... });
      * ```
+     *
+     * @remarks
+     * The returned client holds the access token: it is set as a SOAP header, and
+     * after any call the `soap` library retains the full request envelope on
+     * `client.lastRequest`. Async SOAP methods also resolve a tuple whose fourth
+     * element is that raw request XML. Do not log the client, `lastRequest`, or a
+     * whole SOAP result tuple, or the token will end up in your logs.
      */
     soapClient(): Promise<SoapClientInterface>;
 }

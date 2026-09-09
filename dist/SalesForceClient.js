@@ -162,6 +162,10 @@ export default class SalesForceClient {
             throw new SalesForceAuthError('Authentication failed', 401);
         }
         const url = `${this.#authentication.rest_instance_url}${endpoint}`;
+        // Error metadata records the path only. Query strings carry caller data such
+        // as $filter values containing subscriber emails, and errors routinely end up
+        // in logs; the path is also what error aggregators group on.
+        const endpointPath = endpoint.split('?')[0];
         try {
             const res = await fetch(url, {
                 method: method,
@@ -173,7 +177,7 @@ export default class SalesForceClient {
             });
             if (!res.ok) {
                 const errorText = await res.text();
-                throw new SalesForceAPIError(`Error: ${res.status} ${res.statusText} ${errorText}`, res.status, endpoint, method);
+                throw new SalesForceAPIError(`Error: ${res.status} ${res.statusText} ${errorText}`, res.status, endpointPath, method);
             }
             const data = await res.json();
             return data;
@@ -182,7 +186,7 @@ export default class SalesForceClient {
             if (isSalesForceError(error)) {
                 throw error;
             }
-            throw new SalesForceAPIError(`API request failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, endpoint, method, { cause: toSafeCause(error) });
+            throw new SalesForceAPIError(`API request failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 500, endpointPath, method, { cause: toSafeCause(error) });
         }
     }
     /**
@@ -212,6 +216,13 @@ export default class SalesForceClient {
      * const soapClient = await client.soapClient();
      * const result = await soapClient.RetrieveAsync({ ... });
      * ```
+     *
+     * @remarks
+     * The returned client holds the access token: it is set as a SOAP header, and
+     * after any call the `soap` library retains the full request envelope on
+     * `client.lastRequest`. Async SOAP methods also resolve a tuple whose fourth
+     * element is that raw request XML. Do not log the client, `lastRequest`, or a
+     * whole SOAP result tuple, or the token will end up in your logs.
      */
     async soapClient() {
         if (!this.#authentication || this.#isTokenExpired()) {

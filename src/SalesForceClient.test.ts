@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import SalesForceClient from './SalesForceClient.js';
-import { SalesForceAuthError, SalesForceConfigError } from './errors.js';
+import {
+    SalesForceAPIError,
+    SalesForceAuthError,
+    SalesForceConfigError,
+} from './errors.js';
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -108,6 +112,34 @@ describe('SalesForceClient', () => {
     describe('api() validation', () => {
         it('should throw SalesForceConfigError for an empty endpoint', async () => {
             await expect(client.api('')).rejects.toThrow(SalesForceConfigError);
+        });
+    });
+
+    describe('error metadata privacy', () => {
+        // $filter values contain subscriber emails; errors routinely reach logs.
+        it('should record the path only, not the query string', async () => {
+            (global.fetch as any).mockImplementation(async (url: string) => {
+                if (String(url).includes('/v2/token')) {
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            access_token: 't',
+                            expires_in: 1200,
+                            rest_instance_url: 'https://r.example',
+                        }),
+                    };
+                }
+                return { ok: false, status: 404, statusText: 'NF', text: async () => 'x' };
+            });
+
+            const thrown = await client
+                .api("/data/v1/rowset?$filter=Email eq 'victim@example.com'")
+                .catch(e => e);
+
+            expect(thrown.endpoint).toBe('/data/v1/rowset');
+            expect(thrown.endpoint).not.toContain('victim@example.com');
+            expect(JSON.stringify(thrown)).not.toContain('victim@example.com');
         });
     });
 
@@ -410,6 +442,118 @@ describe('SalesForceClient', () => {
                 'https://test.rest.marketingcloudapis.com/platform/v1/endpoints',
                 expect.anything()
             );
+        });
+    });
+
+    describe('soapClient failure paths', () => {
+        it('should wrap a WSDL fetch failure without leaking the token', async () => {
+            (global.fetch as any).mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    access_token: 'SECRET-TOKEN',
+                    expires_in: 1200,
+                    rest_instance_url: 'https://r.example',
+                }),
+            });
+            const { default: Soap } = await import('soap');
+            (Soap.createClientAsync as any).mockRejectedValueOnce(
+                Object.assign(new Error('getaddrinfo ENOTFOUND'), {
+                    name: 'AxiosError',
+                    code: 'ENOTFOUND',
+                    config: { data: '<fueloauth>SECRET-TOKEN</fueloauth>' },
+                })
+            );
+
+            const thrown = await client.soapClient().catch(e => e);
+
+            expect(thrown).toBeInstanceOf(Error);
+            expect(thrown.message).toContain('Failed to create SOAP client');
+            expect(JSON.stringify(thrown.cause)).not.toContain('SECRET-TOKEN');
+            expect(thrown.cause).toEqual({
+                name: 'AxiosError',
+                message: 'getaddrinfo ENOTFOUND',
+                code: 'ENOTFOUND',
+            });
+        });
+
+        it('should surface a non-Error rejection as Unknown error', async () => {
+            (global.fetch as any).mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    access_token: 't',
+                    expires_in: 1200,
+                    rest_instance_url: 'https://r.example',
+                }),
+            });
+            const { default: Soap } = await import('soap');
+            (Soap.createClientAsync as any).mockRejectedValueOnce('plain string failure');
+
+            await expect(client.soapClient()).rejects.toThrow('Unknown error');
+        });
+    });
+
+    describe('api() failure paths', () => {
+        it('should describe a non-Error rejection as Unknown error', async () => {
+            (global.fetch as any).mockImplementation(async (url: string) => {
+                if (String(url).includes('/v2/token')) {
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            access_token: 't',
+                            expires_in: 1200,
+                            rest_instance_url: 'https://r.example',
+                        }),
+                    };
+                }
+                throw 'not an Error object';
+            });
+
+            const thrown = await client.api('/x').catch(e => e);
+
+            expect(thrown).toBeInstanceOf(SalesForceAPIError);
+            expect(thrown.message).toContain('Unknown error');
+        });
+
+        it('should report a non-ok API response with its status', async () => {
+            (global.fetch as any).mockImplementation(async (url: string) => {
+                if (String(url).includes('/v2/token')) {
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            access_token: 't',
+                            expires_in: 1200,
+                            rest_instance_url: 'https://r.example',
+                        }),
+                    };
+                }
+                return {
+                    ok: false,
+                    status: 404,
+                    statusText: 'Not Found',
+                    text: async () => 'missing',
+                };
+            });
+
+            const thrown = await client.api('/missing').catch(e => e);
+
+            expect(thrown).toBeInstanceOf(SalesForceAPIError);
+            expect(thrown.statusCode).toBe(404);
+            expect(thrown.endpoint).toBe('/missing');
+        });
+
+        it('should describe a non-Error auth rejection as Unknown error', async () => {
+            (global.fetch as any).mockImplementation(async () => {
+                throw 'auth blew up';
+            });
+
+            const thrown = await client.api('/x').catch(e => e);
+
+            expect(thrown).toBeInstanceOf(SalesForceAuthError);
+            expect(thrown.message).toContain('Unknown error');
         });
     });
 

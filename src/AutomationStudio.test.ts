@@ -357,9 +357,21 @@ describe('AutomationStudio', () => {
     });
 
     describe('delete', () => {
-        it('should throw a catchable SDK error rather than a bare Error', async () => {
-            const thrown = await automationStudio.delete('id').catch(e => e);
-            expect(thrown).toBeInstanceOf(SalesForceConfigError);
+        it('should require an automation id', async () => {
+            await expect(automationStudio.delete('')).rejects.toBeInstanceOf(
+                SalesForceConfigError
+            );
+        });
+
+        it('should DELETE the automation endpoint with an encoded id', async () => {
+            (mockSFClient.api as any).mockResolvedValueOnce({ ok: true });
+
+            await automationStudio.delete('../../../hub/v1/dataevents');
+
+            const [url, method] = (mockSFClient.api as any).mock.calls[0];
+            expect(method).toBe('DELETE');
+            expect(url).not.toContain('../');
+            expect(url.startsWith('/automation/v1/automations/')).toBe(true);
         });
     });
 

@@ -163,12 +163,19 @@ export default class AutomationStudio {
      */
     pause(automationId: string): Promise<boolean>;
     /**
-     * Placeholder method for deleting an automation
+     * Deletes an automation
      *
      * @param automationId - The ID of the automation to delete
-     * @deprecated This method is not yet implemented
+     * @returns The API response, if the endpoint returns one
+     * @throws {SalesForceConfigError} If the automation ID is missing
+     * @throws {SalesForceAPIError} If the request fails
+     *
+     * @example
+     * ```typescript
+     * await automationStudio.delete('automation-id');
+     * ```
      */
-    delete(automationId: string): Promise<void>;
+    delete<T = any>(automationId: string): Promise<T>;
     /**
      * Runs an automation immediately (run once)
      *

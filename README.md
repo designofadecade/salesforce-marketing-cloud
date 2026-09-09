@@ -293,6 +293,14 @@ Automatic pagination stops after `AutomationStudio.MAX_PAGES` (1000) pages and
 throws a `SalesForceAPIError`, guarding against a server that always advertises
 a next link.
 
+##### `delete(automationId: string): Promise<T>`
+
+Deletes an automation.
+
+```typescript
+await automation.delete('automation-id');
+```
+
 ##### `get(externalKey: string): Promise<AutomationResponse>`
 
 Gets a specific automation.
@@ -370,7 +378,36 @@ const result = await automation.run('automation-id');
 
 ## Error Handling
 
-The SDK provides custom error classes for better error handling:
+The SDK provides custom error classes for better error handling. Every method
+throws these consistently: argument problems raise `SalesForceConfigError`,
+authentication problems raise `SalesForceAuthError` (with the real HTTP status),
+and everything else raises `SalesForceAPIError`.
+
+```typescript
+import {
+  SalesForceAuthError,
+  SalesForceAPIError,
+  SalesForceConfigError,
+} from '@designofadecade/salesforce-marketing-cloud';
+
+try {
+  await dataExtensions.getAllRows('customer-de');
+} catch (error) {
+  if (error instanceof SalesForceConfigError) {
+    // Bad arguments or client configuration
+  } else if (error instanceof SalesForceAuthError) {
+    // Credentials or scope problem; error.statusCode is the real status (e.g. 401)
+  } else if (error instanceof SalesForceAPIError) {
+    // API failure; error.statusCode, error.endpoint and error.method are populated
+  }
+}
+```
+
+Wrapped failures carry a sanitized `cause` (`name`, `message` and `code` only).
+The underlying transport error is deliberately **not** attached, because for SOAP
+calls it holds the request envelope including the access token — attaching it
+would leak a live token into any logger that serializes the error chain.
+
 
 ### `SalesForceConfigError`
 
