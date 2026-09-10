@@ -1,5 +1,10 @@
 # Salesforce Marketing Cloud SDK
 
+[![npm version](https://img.shields.io/npm/v/@designofadecade/salesforce-marketing-cloud)](https://www.npmjs.com/package/@designofadecade/salesforce-marketing-cloud)
+[![npm downloads](https://img.shields.io/npm/dm/@designofadecade/salesforce-marketing-cloud)](https://www.npmjs.com/package/@designofadecade/salesforce-marketing-cloud)
+[![Test](https://github.com/designofadecade/salesforce-marketing-cloud/actions/workflows/test.yml/badge.svg)](https://github.com/designofadecade/salesforce-marketing-cloud/actions/workflows/test.yml)
+[![types](https://img.shields.io/npm/types/@designofadecade/salesforce-marketing-cloud)](https://www.typescriptlang.org/)
+[![node](https://img.shields.io/node/v/@designofadecade/salesforce-marketing-cloud)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A modern, type-safe Node.js SDK for interacting with the Salesforce Marketing Cloud API. Built with TypeScript, for Node.js 20 and above.
@@ -369,13 +374,11 @@ const success = await automation.activate(
 );
 
 // Or with Central Time
-const success = await automation.activate(
+const successCentral = await automation.activate(
   'automation-id',
   '2026-03-01T10:00:00',
   AutomationStudio.TIME_ZONE_AMERICA_CHICAGO
 );
-```
-
 ```
 
 ##### `pause(automationId: string): Promise<boolean>`
