@@ -1,6 +1,6 @@
 {
   "name": "@designofadecade/salesforce-marketing-cloud",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "description": "Type-safe TypeScript SDK for Salesforce Marketing Cloud (SFMC) — OAuth 2.0 auth, Data Extensions, Content Assets and Automation Studio over the REST and SOAP APIs.",
   "type": "module",
   "main": "./dist/index.js",

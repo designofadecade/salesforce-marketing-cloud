@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.2] - 2026-09-10
+
+Metadata and documentation only. No runtime code changed; `dist` output is byte-identical to 2.5.1.
+
+### Changed
+- **The npm description now describes what the SDK actually does.** It read "Salesforce Marketing Cloud SDK for Node.js", which matched almost nothing a person would search for. It now names the surface: OAuth 2.0 auth, Data Extensions, Content Assets and Automation Studio, over the REST and SOAP APIs.
+- **Keywords expanded from 5 to 19**, covering the module names (`data-extensions`, `automation-studio`, `content-builder`), the transports (`rest-api`, `soap-api`, `oauth2`), the packaging (`typescript`, `esm`, `nodejs`) and `exacttarget`, which is still a live search term for Marketing Cloud. Registry metadata is frozen per published version, so this release is what makes the new description and keywords visible on npm.
+
+### Fixed
+- **A stray unclosed code fence in the README `activate()` section.** It left an odd number of fence markers, so every rendered view — the npm page and GitHub — swallowed the following prose into a phantom code block.
+- **The `activate()` example declared `const success` twice in a single snippet**, so copy-pasting it did not compile. The second is now `const successCentral`.
+
+### Documentation
+- README gained npm version, downloads, CI status, types and Node badges alongside the existing license badge. All five read from the registry or Actions, so they track releases without manual edits.
+
+### Notes
+- The GitHub repository had no description, topics or homepage, which is the main reason it surfaced poorly in search. A description, a homepage pointing at the npm package, and 19 topics were set on the repository itself; those are live independently of this release.
+
 ## [2.5.1] - 2026-09-09
 
 ### Fixed
